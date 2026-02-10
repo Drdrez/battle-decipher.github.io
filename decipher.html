@@ -3,51 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v3.0</title>
+    <title>Battle Decipher v5.0</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #3b82f6; --success: #22c55e; --danger: #ef4444; }
-        body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--text); padding: 20px; max-width: 900px; margin: 0 auto; }
-        h1 { text-align: center; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+        :root { 
+            --bg: #0f172a; 
+            --card: #1e293b; 
+            --text: #e2e8f0; 
+            --accent: #3b82f6; 
+            --success: #22c55e; 
+            --danger: #ef4444; 
+        }
+        body { 
+            font-family: 'Courier New', monospace; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding: 20px; 
+            max-width: 1000px; 
+            margin: 0 auto; 
+        }
+        h1 { 
+            text-align: center; 
+            color: var(--accent); 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            margin-bottom: 30px;
+        }
         
+        /* LAYOUT */
         .grid { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; }
-        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
         
+        /* TABS */
         .tabs { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab { flex: 1; padding: 10px; background: #334155; cursor: pointer; text-align: center; font-weight: bold; min-width: 120px; }
+        .tab { 
+            flex: 1; 
+            padding: 12px; 
+            background: #334155; 
+            cursor: pointer; 
+            text-align: center; 
+            font-weight: bold; 
+            min-width: 100px; 
+            border-radius: 4px 4px 0 0;
+            transition: background 0.2s;
+        }
+        .tab:hover { background: #475569; }
         .tab.active { background: var(--accent); color: white; }
         
-        .panel { display: none; background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid #334155; }
+        /* PANELS */
+        .panel { 
+            display: none; 
+            background: var(--card); 
+            padding: 25px; 
+            border-radius: 0 0 8px 8px; 
+            border: 1px solid #334155; 
+        }
         .panel.active { display: block; }
         
-        .tools-panel { background: #111827; padding: 15px; border-radius: 8px; border: 1px solid #334155; height: fit-content; }
-        .tool-btn { width: 100%; padding: 8px; margin-bottom: 8px; background: #334155; color: white; border: none; cursor: pointer; text-align: left; font-size: 0.9em; }
-        .tool-btn:hover { background: #475569; }
-        .tool-header { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: block; border-bottom: 1px solid #334155; padding-bottom: 5px; }
-
-        textarea, input { width: 100%; padding: 10px; background: #020617; border: 1px solid #334155; color: #fff; font-family: monospace; box-sizing: border-box; margin-bottom: 10px; }
-        button.action { width: 100%; padding: 12px; background: var(--success); color: black; font-weight: bold; border: none; cursor: pointer; font-size: 1.1em; margin-top: 10px; }
-        button.action:hover { opacity: 0.9; }
-        .result-box { margin-top: 20px; padding: 15px; background: #000; border-left: 4px solid var(--accent); white-space: pre-wrap; word-break: break-all; }
+        /* INPUTS - The :not fix prevents checkboxes from stretching */
+        textarea, input:not([type="checkbox"]) { 
+            width: 100%; 
+            padding: 12px; 
+            background: #020617; 
+            border: 1px solid #334155; 
+            color: #fff; 
+            font-family: 'Courier New', monospace; 
+            box-sizing: border-box; 
+            margin-bottom: 15px; 
+            border-radius: 4px;
+        }
+        textarea:focus, input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
         
-        /* Freq Chart Styles */
-        .freq-row { display: flex; justify-content: space-between; font-size: 0.8em; color: #94a3b8; border-bottom: 1px solid #333; padding: 2px 0; }
+        /* BUTTONS */
+        button.action { 
+            width: 100%; 
+            padding: 12px; 
+            background: var(--success); 
+            color: black; 
+            font-weight: bold; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            border-radius: 4px;
+            transition: opacity 0.2s;
+        }
+        button.action:hover { opacity: 0.9; }
+
+        /* RESULTS */
+        .result-box { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #000; 
+            border-left: 4px solid var(--accent); 
+            white-space: pre-wrap; 
+            word-break: break-all; 
+            font-size: 1.05em;
+        }
+        
+        /* CHECKBOX FIX */
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            background: #1e293b; /* Matches card */
+            padding: 5px 0;
+        }
+        .checkbox-row input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        /* SIDEBAR TOOLS */
+        .tools-panel { 
+            background: #111827; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #334155; 
+            height: fit-content; 
+        }
+        .tool-btn { 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 8px; 
+            background: #334155; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            text-align: left; 
+            font-size: 0.9em; 
+            border-radius: 4px;
+        }
+        .tool-btn:hover { background: #475569; }
+        .tool-header { 
+            color: var(--accent); 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            display: block; 
+            border-bottom: 1px solid #334155; 
+            padding-bottom: 5px; 
+        }
+        
+        /* FREQ CHART */
+        .freq-row { display: flex; justify-content: space-between; font-size: 0.8em; color: #94a3b8; padding: 2px 0; }
+        
+        /* MODULO FLEX */
+        .flex-row { display: flex; gap: 10px; align-items: center; }
+        .flex-row > div { flex: 1; }
+        .note { font-size: 0.85em; color: #94a3b8; margin-bottom: 10px; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v3.0</h1>
+    <h1>🔐 Battle Decipher v5.0</h1>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('caesar')">Caesar / Shift</div>
-        <div class="tab" onclick="switchTab('xor')">XOR (One-Time)</div>
-        <div class="tab" onclick="switchTab('transpo')">Columnar (Num/Text)</div>
+        <div class="tab active" onclick="switchTab('caesar')">Caesar</div>
+        <div class="tab" onclick="switchTab('xor')">XOR</div>
+        <div class="tab" onclick="switchTab('transpo')">Columnar</div>
         <div class="tab" onclick="switchTab('rail')">Rail Fence</div>
+        <div class="tab" onclick="switchTab('modulo')">Modulo</div>
     </div>
 
     <div class="grid">
         <div>
+            
             <div id="caesar" class="panel active">
                 <h3>Caesar / Shift Breaker</h3>
+                <p class="note">Brute forces all 25 shifts. Watch the Frequency Chart!</p>
                 <textarea id="caesarInput" rows="4" placeholder="Enter ciphertext..." oninput="updateFreq()"></textarea>
                 <button class="action" onclick="solveCaesar()">BRUTE FORCE</button>
                 <div id="caesarResult" class="result-box" style="display:none;"></div>
@@ -55,33 +180,70 @@
 
             <div id="xor" class="panel">
                 <h3>XOR / One-Time Pad</h3>
-                <textarea id="xorInput" rows="3" placeholder="Hex (1A 2B) or Text"></textarea>
-                <label><input type="checkbox" id="isHex" checked> Is input Hex?</label>
-                <input type="text" id="xorKey" placeholder="Secret Key">
+                <p class="note">Paste Hex (e.g., 1A 2B) or raw text.</p>
+                
+                <textarea id="xorInput" rows="3" placeholder="e.g. 1A 2B 3C (Hex)"></textarea>
+                
+                <label class="checkbox-row">
+                    <input type="checkbox" id="isHex" checked onchange="togglePlaceholder()"> 
+                    <span>Is input Hex? (Uncheck for Text)</span>
+                </label>
+                
+                <label>Secret Key:</label>
+                <input type="text" id="xorKey" placeholder="Enter Key...">
+                
                 <button class="action" onclick="solveXOR()">DECRYPT XOR</button>
                 <div id="xorResult" class="result-box" style="display:none;"></div>
             </div>
 
             <div id="transpo" class="panel">
                 <h3>Columnar Transposition</h3>
-                <p style="font-size:0.9em; color:#aaa; margin-bottom:10px;">
-                    Supports <strong>Numeric Key</strong> (e.g., "4 3 1 2") OR <strong>Keyword</strong> (e.g., "ZEBRA").
+                <p class="note">
+                    Auto-detects <strong>Numeric Key</strong> (e.g. "4 3 1") or <strong>Word Key</strong> (e.g. "ZEBRA").<br>
+                    Removes spaces from input automatically.
                 </p>
+                
+                <label>Ciphertext:</label>
                 <textarea id="transpoInput" rows="3" placeholder="lvtmo latar kosvo..."></textarea>
+                
                 <label>Key:</label>
                 <input type="text" id="transpoKey" placeholder="4 3 1 2 5 6 7">
+                
                 <button class="action" onclick="solveTranspo()">DECRYPT COLUMNAR</button>
                 <div id="transpoResult" class="result-box" style="display:none;"></div>
             </div>
 
             <div id="rail" class="panel">
                 <h3>Rail Fence (Zig-Zag)</h3>
+                <p class="note">Decodes zigzag patterns. Standard is 2 or 3 rails.</p>
                 <textarea id="railInput" rows="3" placeholder="Scrambled text..."></textarea>
                 <label>Number of Rails:</label>
                 <input type="number" id="railCount" value="2" min="2" max="10">
                 <button class="action" onclick="solveRail()">DECRYPT RAIL FENCE</button>
                 <div id="railResult" class="result-box" style="display:none;"></div>
             </div>
+
+            <div id="modulo" class="panel">
+                <h3>Modulo Calculator</h3>
+                <p class="note">Solves: X = A MOD B</p>
+                
+                <div class="flex-row">
+                    <div>
+                        <label>Number (A):</label>
+                        <input type="number" id="modA" placeholder="11">
+                    </div>
+                    <div style="flex: 0 0 40px; text-align:center; font-weight:bold; font-size:1.2em;">
+                        MOD
+                    </div>
+                    <div>
+                        <label>Divisor (B):</label>
+                        <input type="number" id="modB" placeholder="5">
+                    </div>
+                </div>
+                <button class="action" onclick="solveMod()">CALCULATE</button>
+                <div id="modResult" class="result-box" style="display:none; text-align:center; font-size: 2em; color: var(--success);"></div>
+            </div>
+
         </div>
 
         <div class="tools-panel">
@@ -90,17 +252,24 @@
             <button class="tool-btn" onclick="applyTool('reverse')">Reverse Text</button>
             <button class="tool-btn" onclick="applyTool('upper')">TO UPPERCASE</button>
             <button class="tool-btn" onclick="applyTool('b64')">Base64 Decode</button>
-            <span class="tool-header" style="margin-top:15px;">📊 FREQUENCY</span>
-            <div id="freqChart">Start typing...</div>
+            
+            <span class="tool-header" style="margin-top:20px;">📊 FREQUENCY</span>
+            <div id="freqChart" style="font-size:0.9em; color:#aaa;">Start typing in Caesar tab...</div>
         </div>
     </div>
 
     <script>
+        // --- UI UTILS ---
         function switchTab(id) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             event.target.classList.add('active');
+        }
+
+        function togglePlaceholder() {
+            const isHex = document.getElementById('isHex').checked;
+            document.getElementById('xorInput').placeholder = isHex ? "e.g. 1A 2B 3C (Hex)" : "e.g. HELLO WORLD (Text)";
         }
 
         function getActiveInput() {
@@ -115,10 +284,14 @@
             const el = getActiveInput();
             if (!el) return;
             let val = el.value;
+
             if (type === 'removeSpaces') val = val.replace(/\s+/g, '');
             if (type === 'reverse') val = val.split('').reverse().join('');
             if (type === 'upper') val = val.toUpperCase();
-            if (type === 'b64') { try { val = atob(val); } catch(e) { alert("Invalid Base64"); } }
+            if (type === 'b64') {
+                try { val = atob(val); } catch(e) { alert("Invalid Base64 string"); }
+            }
+            
             el.value = val;
             if(document.getElementById('caesar').classList.contains('active')) updateFreq();
         }
@@ -127,19 +300,25 @@
             const text = document.getElementById('caesarInput').value.toUpperCase();
             const counts = {};
             let total = 0;
+            
             for (let char of text) {
                 if (char >= 'A' && char <= 'Z') {
                     counts[char] = (counts[char] || 0) + 1;
                     total++;
                 }
             }
+
             if (total === 0) { document.getElementById('freqChart').innerHTML = "No text..."; return; }
-            const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
+
+            const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5); 
+            
             let html = "";
             sorted.forEach(l => {
                 let pct = Math.round((counts[l] / total) * 100);
-                html += `<div class="freq-row"><span>${l}</span><span>${pct}%</span></div><div style="width:100%; background:#333; height:4px; margin-bottom:4px;"><div style="width:${pct}%; background:#3b82f6; height:100%;"></div></div>`;
+                html += `<div class="freq-row"><span>${l}</span><span>${pct}%</span></div>`;
+                html += `<div style="width:100%; background:#333; height:4px; margin-bottom:6px;"><div style="width:${pct}%; background:#3b82f6; height:100%;"></div></div>`;
             });
+
             document.getElementById('freqChart').innerHTML = html;
         }
 
@@ -156,7 +335,7 @@
                     else if (c >= 97 && c <= 122) shifted += String.fromCharCode(((c - 97 - s + 26) % 26) + 97);
                     else shifted += input[i];
                 }
-                output += `<div style="margin-bottom:5px;"><strong style="color:#22c55e">-${s}:</strong> ${shifted}</div>`;
+                output += `<div style="margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><strong style="color:#22c55e">-${s}:</strong> ${shifted}</div>`;
             }
             document.getElementById('caesarResult').style.display = 'block';
             document.getElementById('caesarResult').innerHTML = output;
@@ -167,17 +346,23 @@
             const key = document.getElementById('xorKey').value;
             const isHex = document.getElementById('isHex').checked;
             let output = "";
-            if (!key) { alert("Key needed"); return; }
+
+            if (!key) { alert("Please enter a Secret Key"); return; }
+
             let inputBytes = [];
             if (isHex) {
                 const cleanHex = input.replace(/[^0-9A-Fa-f]/g, '');
-                for (let i = 0; i < cleanHex.length; i += 2) inputBytes.push(parseInt(cleanHex.substr(i, 2), 16));
+                for (let i = 0; i < cleanHex.length; i += 2) {
+                    inputBytes.push(parseInt(cleanHex.substr(i, 2), 16));
+                }
             } else {
                 for (let i = 0; i < input.length; i++) inputBytes.push(input.charCodeAt(i));
             }
+
             for (let i = 0; i < inputBytes.length; i++) {
                 output += String.fromCharCode(inputBytes[i] ^ key.charCodeAt(i % key.length));
             }
+
             document.getElementById('xorResult').style.display = 'block';
             document.getElementById('xorResult').innerText = output;
         }
@@ -185,25 +370,20 @@
         function solveTranspo() {
             const text = document.getElementById('transpoInput').value.replace(/\s/g, '');
             let keyStr = document.getElementById('transpoKey').value.trim();
-            if (!keyStr || !text) return;
+            
+            if (!keyStr || !text) { alert("Please enter both Ciphertext and Key"); return; }
 
             let keyOrder = [];
             
-            // CHECK IF NUMERIC KEY (e.g., "4 3 1 2")
+            // Detect Numeric Key (e.g. "4 3 1")
             if (/^[\d\s]+$/.test(keyStr)) {
-                // Parse space-separated numbers
                 keyOrder = keyStr.split(/\s+/).map(n => parseInt(n));
-                
-                // Adjust for 0-based index if user enters 1-based (like "4 3 1")
-                // Check if '0' is missing but 'max' exists
-                if (!keyOrder.includes(0)) {
-                    keyOrder = keyOrder.map(n => n - 1);
-                }
+                // Fix 1-based index if needed
+                if (!keyOrder.includes(0)) keyOrder = keyOrder.map(n => n - 1);
             } else {
-                // TEXT KEYWORD (e.g., "ZEBRA") logic
-                let keyword = keyStr;
+                // Detect Word Key (e.g. "ZEBRA")
                 let keyIndices = [];
-                for (let i = 0; i < keyword.length; i++) keyIndices.push({ char: keyword[i], index: i });
+                for (let i = 0; i < keyStr.length; i++) keyIndices.push({ char: keyStr[i], index: i });
                 keyIndices.sort((a, b) => a.char.localeCompare(b.char));
                 keyOrder = keyIndices.map(k => k.index);
             }
@@ -212,33 +392,22 @@
             const rows = Math.ceil(text.length / keyLen);
             const fullCols = text.length % keyLen;
             
-            // Reconstruct Grid
             let grid = new Array(keyLen).fill("");
             let currentIndex = 0;
 
-            // Iterate through the columns in the order specified by Key
-            // Example Key: 4, 3, 1... means "The first chunk of text belongs to Col 4"
             for (let i = 0; i < keyLen; i++) {
                 let targetColIndex = keyOrder[i];
-                
-                // Determine column length
                 let colLength = rows;
-                // Standard logic: columns 0 to fullCols-1 are long. Others are short.
-                if (fullCols !== 0 && targetColIndex >= fullCols) {
-                    colLength = rows - 1;
-                }
-
+                if (fullCols !== 0 && targetColIndex >= fullCols) colLength = rows - 1;
+                
                 grid[targetColIndex] = text.substr(currentIndex, colLength);
                 currentIndex += colLength;
             }
 
-            // Read Rows
             let output = "";
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < keyLen; c++) {
-                    if (grid[c] && grid[c].length > r) {
-                        output += grid[c][r];
-                    }
+                    if (grid[c] && grid[c].length > r) output += grid[c][r];
                 }
             }
             document.getElementById('transpoResult').style.display = 'block';
@@ -249,15 +418,51 @@
             const ciphertext = document.getElementById('railInput').value.replace(/\s/g, '');
             const rails = parseInt(document.getElementById('railCount').value);
             if (!ciphertext || rails < 2) return;
+
             let pattern = new Array(rails).fill(0);
             let rail = 0, dir = 1;
-            for (let i = 0; i < ciphertext.length; i++) { pattern[rail]++; rail += dir; if (rail === 0 || rail === rails - 1) dir *= -1; }
-            let fence = [], currentIdx = 0;
-            for (let r = 0; r < rails; r++) { fence.push(ciphertext.substr(currentIdx, pattern[r]).split('')); currentIdx += pattern[r]; }
-            let result = "", r = 0, d = 1;
-            for (let i = 0; i < ciphertext.length; i++) { result += fence[r].shift(); r += d; if (r === 0 || r === rails - 1) d *= -1; }
+            
+            // Calculate lengths
+            for (let i = 0; i < ciphertext.length; i++) {
+                pattern[rail]++;
+                rail += dir;
+                if (rail === 0 || rail === rails - 1) dir *= -1;
+            }
+
+            // Fill rails
+            let fence = [];
+            let currentIdx = 0;
+            for (let r = 0; r < rails; r++) {
+                fence.push(ciphertext.substr(currentIdx, pattern[r]).split(''));
+                currentIdx += pattern[r];
+            }
+
+            // Read ZigZag
+            let result = "";
+            rail = 0; dir = 1;
+            for (let i = 0; i < ciphertext.length; i++) {
+                result += fence[rail].shift();
+                rail += dir;
+                if (rail === 0 || rail === rails - 1) dir *= -1;
+            }
+
             document.getElementById('railResult').style.display = 'block';
             document.getElementById('railResult').innerText = result;
+        }
+
+        function solveMod() {
+            const a = parseInt(document.getElementById('modA').value);
+            const b = parseInt(document.getElementById('modB').value);
+            
+            if (isNaN(a) || isNaN(b)) { alert("Enter valid numbers"); return; }
+            if (b === 0) { alert("Cannot divide by zero"); return; }
+
+            // Python-style modulo for negative numbers
+            const result = ((a % b) + b) % b;
+            
+            const resBox = document.getElementById('modResult');
+            resBox.style.display = 'block';
+            resBox.innerText = `Result: ${result}`;
         }
     </script>
 </body>
