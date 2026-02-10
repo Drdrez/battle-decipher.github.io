@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v5.0</title>
+    <title>Battle Decipher v7.0 (Training Dojo)</title>
     <style>
         :root { 
             --bg: #0f172a; 
@@ -11,7 +11,8 @@
             --text: #e2e8f0; 
             --accent: #3b82f6; 
             --success: #22c55e; 
-            --danger: #ef4444; 
+            --danger: #f59e0b;
+            --purple: #a855f7; /* For Dojo */
         }
         body { 
             font-family: 'Courier New', monospace; 
@@ -42,13 +43,15 @@
             cursor: pointer; 
             text-align: center; 
             font-weight: bold; 
-            min-width: 100px; 
+            min-width: 80px; 
             border-radius: 4px 4px 0 0;
             transition: background 0.2s;
         }
         .tab:hover { background: #475569; }
         .tab.active { background: var(--accent); color: white; }
-        
+        .tab.dojo-tab { background: #581c87; color: #e9d5ff; border-top: 2px solid var(--purple); }
+        .tab.dojo-tab.active { background: var(--purple); color: white; }
+
         /* PANELS */
         .panel { 
             display: none; 
@@ -59,7 +62,7 @@
         }
         .panel.active { display: block; }
         
-        /* INPUTS - The :not fix prevents checkboxes from stretching */
+        /* INPUTS */
         textarea, input:not([type="checkbox"]) { 
             width: 100%; 
             padding: 12px; 
@@ -71,13 +74,12 @@
             margin-bottom: 15px; 
             border-radius: 4px;
         }
-        textarea:focus, input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
         
         /* BUTTONS */
-        button.action { 
-            width: 100%; 
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { 
+            flex: 1;
             padding: 12px; 
-            background: var(--success); 
             color: black; 
             font-weight: bold; 
             border: none; 
@@ -86,7 +88,11 @@
             border-radius: 4px;
             transition: opacity 0.2s;
         }
-        button.action:hover { opacity: 0.9; }
+        button:hover { opacity: 0.9; }
+        .btn-decrypt { background: var(--success); }
+        .btn-encrypt { background: var(--danger); }
+        .btn-dojo { background: var(--purple); color: white; }
+        .tool-btn { background: #334155; color: white; width: 100%; margin-bottom: 8px; text-align: left; padding: 10px; }
 
         /* RESULTS */
         .result-box { 
@@ -99,57 +105,30 @@
             font-size: 1.05em;
         }
         
-        /* CHECKBOX FIX */
+        /* DOJO SPECIFIC */
+        .difficulty-btns { display: flex; gap: 10px; margin-bottom: 20px; }
+        .diff-btn { padding: 15px; border: 2px solid #334155; background: #0f172a; color: #aaa; cursor: pointer; text-align: center; flex: 1; font-weight: bold; }
+        .diff-btn:hover { border-color: var(--purple); color: white; }
+        .diff-btn.selected { background: var(--purple); color: white; border-color: var(--purple); }
+        .spoiler { filter: blur(5px); cursor: pointer; transition: 0.3s; }
+        .spoiler:hover, .spoiler.revealed { filter: blur(0); }
+
+        /* CHECKBOX ROW */
         .checkbox-row {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 15px;
             cursor: pointer;
-            background: #1e293b; /* Matches card */
+            background: #1e293b;
             padding: 5px 0;
         }
-        .checkbox-row input {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: var(--accent);
-        }
+        .checkbox-row input { width: 20px; height: 20px; cursor: pointer; }
 
-        /* SIDEBAR TOOLS */
-        .tools-panel { 
-            background: #111827; 
-            padding: 15px; 
-            border-radius: 8px; 
-            border: 1px solid #334155; 
-            height: fit-content; 
-        }
-        .tool-btn { 
-            width: 100%; 
-            padding: 10px; 
-            margin-bottom: 8px; 
-            background: #334155; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            text-align: left; 
-            font-size: 0.9em; 
-            border-radius: 4px;
-        }
-        .tool-btn:hover { background: #475569; }
-        .tool-header { 
-            color: var(--accent); 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-            display: block; 
-            border-bottom: 1px solid #334155; 
-            padding-bottom: 5px; 
-        }
-        
-        /* FREQ CHART */
+        /* SIDEBAR & MISC */
+        .tools-panel { background: #111827; padding: 15px; border-radius: 8px; border: 1px solid #334155; height: fit-content; }
+        .tool-header { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: block; border-bottom: 1px solid #334155; padding-bottom: 5px; }
         .freq-row { display: flex; justify-content: space-between; font-size: 0.8em; color: #94a3b8; padding: 2px 0; }
-        
-        /* MODULO FLEX */
         .flex-row { display: flex; gap: 10px; align-items: center; }
         .flex-row > div { flex: 1; }
         .note { font-size: 0.85em; color: #94a3b8; margin-bottom: 10px; font-style: italic; }
@@ -157,10 +136,11 @@
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v5.0</h1>
+    <h1>🔐 Battle Decipher v7.0</h1>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('caesar')">Caesar</div>
+        <div class="tab dojo-tab active" onclick="switchTab('dojo')">🥋 Training Dojo</div>
+        <div class="tab" onclick="switchTab('caesar')">Caesar</div>
         <div class="tab" onclick="switchTab('xor')">XOR</div>
         <div class="tab" onclick="switchTab('transpo')">Columnar</div>
         <div class="tab" onclick="switchTab('rail')">Rail Fence</div>
@@ -170,77 +150,86 @@
     <div class="grid">
         <div>
             
-            <div id="caesar" class="panel active">
-                <h3>Caesar / Shift Breaker</h3>
-                <p class="note">Brute forces all 25 shifts. Watch the Frequency Chart!</p>
-                <textarea id="caesarInput" rows="4" placeholder="Enter ciphertext..." oninput="updateFreq()"></textarea>
-                <button class="action" onclick="solveCaesar()">BRUTE FORCE</button>
+            <div id="dojo" class="panel active">
+                <h3>Generate Practice Puzzle</h3>
+                <p class="note">Select a difficulty to generate a random cipher.</p>
+
+                <div class="difficulty-btns">
+                    <div class="diff-btn" onclick="setDiff('easy', this)">EASY</div>
+                    <div class="diff-btn" onclick="setDiff('medium', this)">MEDIUM</div>
+                    <div class="diff-btn" onclick="setDiff('hard', this)">HARD</div>
+                </div>
+
+                <button class="btn-dojo" onclick="generatePuzzle()">GENERATE CHALLENGE</button>
+
+                <div id="dojoResult" class="result-box" style="display:none; border-left-color: var(--purple);">
+                    <div style="margin-bottom:10px; color: #aaa;">CIPHERTEXT (Copy this):</div>
+                    <div id="puzzleText" style="font-size:1.2em; color:white; margin-bottom:20px; user-select: text;"></div>
+                    
+                    <div style="margin-bottom:5px; color: #aaa;">HINT:</div>
+                    <div id="puzzleHint" style="color: var(--accent); margin-bottom:20px;"></div>
+
+                    <div style="margin-bottom:5px; color: #aaa;">ANSWER (Hover to Reveal):</div>
+                    <div id="puzzleAnswer" class="spoiler" style="background: #333; padding: 5px;"></div>
+                </div>
+            </div>
+
+            <div id="caesar" class="panel">
+                <h3>Caesar / Shift</h3>
+                <textarea id="caesarInput" rows="3" placeholder="Enter message..." oninput="updateFreq()"></textarea>
+                <div class="flex-row">
+                    <div><label>Shift (Key):</label><input type="number" id="caesarShift" value="3" min="1" max="25"></div>
+                    <div style="flex:2;"></div> 
+                </div>
+                <div class="btn-group">
+                    <button class="btn-decrypt" onclick="solveCaesar(false)">🔓 DECRYPT</button>
+                    <button class="btn-encrypt" onclick="solveCaesar(true)">🔒 ENCRYPT</button>
+                </div>
                 <div id="caesarResult" class="result-box" style="display:none;"></div>
             </div>
 
             <div id="xor" class="panel">
                 <h3>XOR / One-Time Pad</h3>
-                <p class="note">Paste Hex (e.g., 1A 2B) or raw text.</p>
-                
-                <textarea id="xorInput" rows="3" placeholder="e.g. 1A 2B 3C (Hex)"></textarea>
-                
-                <label class="checkbox-row">
-                    <input type="checkbox" id="isHex" checked onchange="togglePlaceholder()"> 
-                    <span>Is input Hex? (Uncheck for Text)</span>
-                </label>
-                
-                <label>Secret Key:</label>
-                <input type="text" id="xorKey" placeholder="Enter Key...">
-                
-                <button class="action" onclick="solveXOR()">DECRYPT XOR</button>
+                <textarea id="xorInput" rows="3" placeholder="Input text or hex..."></textarea>
+                <label class="checkbox-row"><input type="checkbox" id="isHex" checked onchange="togglePlaceholder()"> <span>Is input Hex?</span></label>
+                <label>Key:</label><input type="text" id="xorKey" placeholder="Enter Key...">
+                <div class="btn-group">
+                    <button class="btn-decrypt" onclick="solveXOR(false)">🔓 DECRYPT</button>
+                    <button class="btn-encrypt" onclick="solveXOR(true)">🔒 ENCRYPT</button>
+                </div>
                 <div id="xorResult" class="result-box" style="display:none;"></div>
             </div>
 
             <div id="transpo" class="panel">
                 <h3>Columnar Transposition</h3>
-                <p class="note">
-                    Auto-detects <strong>Numeric Key</strong> (e.g. "4 3 1") or <strong>Word Key</strong> (e.g. "ZEBRA").<br>
-                    Removes spaces from input automatically.
-                </p>
-                
-                <label>Ciphertext:</label>
-                <textarea id="transpoInput" rows="3" placeholder="lvtmo latar kosvo..."></textarea>
-                
-                <label>Key:</label>
-                <input type="text" id="transpoKey" placeholder="4 3 1 2 5 6 7">
-                
-                <button class="action" onclick="solveTranspo()">DECRYPT COLUMNAR</button>
+                <textarea id="transpoInput" rows="3" placeholder="Enter text..."></textarea>
+                <label>Key:</label><input type="text" id="transpoKey" placeholder="e.g. 4 3 1 2">
+                <div class="btn-group">
+                    <button class="btn-decrypt" onclick="runTranspo(false)">🔓 DECRYPT</button>
+                    <button class="btn-encrypt" onclick="runTranspo(true)">🔒 ENCRYPT</button>
+                </div>
                 <div id="transpoResult" class="result-box" style="display:none;"></div>
             </div>
 
             <div id="rail" class="panel">
-                <h3>Rail Fence (Zig-Zag)</h3>
-                <p class="note">Decodes zigzag patterns. Standard is 2 or 3 rails.</p>
-                <textarea id="railInput" rows="3" placeholder="Scrambled text..."></textarea>
-                <label>Number of Rails:</label>
-                <input type="number" id="railCount" value="2" min="2" max="10">
-                <button class="action" onclick="solveRail()">DECRYPT RAIL FENCE</button>
+                <h3>Rail Fence</h3>
+                <textarea id="railInput" rows="3" placeholder="Enter text..."></textarea>
+                <label>Rails:</label><input type="number" id="railCount" value="2" min="2" max="10">
+                <div class="btn-group">
+                    <button class="btn-decrypt" onclick="runRail(false)">🔓 DECRYPT</button>
+                    <button class="btn-encrypt" onclick="runRail(true)">🔒 ENCRYPT</button>
+                </div>
                 <div id="railResult" class="result-box" style="display:none;"></div>
             </div>
 
             <div id="modulo" class="panel">
                 <h3>Modulo Calculator</h3>
-                <p class="note">Solves: X = A MOD B</p>
-                
                 <div class="flex-row">
-                    <div>
-                        <label>Number (A):</label>
-                        <input type="number" id="modA" placeholder="11">
-                    </div>
-                    <div style="flex: 0 0 40px; text-align:center; font-weight:bold; font-size:1.2em;">
-                        MOD
-                    </div>
-                    <div>
-                        <label>Divisor (B):</label>
-                        <input type="number" id="modB" placeholder="5">
-                    </div>
+                    <div><label>A:</label><input type="number" id="modA" placeholder="11"></div>
+                    <div style="flex:0; font-weight:bold; padding-top:20px">MOD</div>
+                    <div><label>B:</label><input type="number" id="modB" placeholder="5"></div>
                 </div>
-                <button class="action" onclick="solveMod()">CALCULATE</button>
+                <button class="btn-decrypt" onclick="solveMod()">CALCULATE</button>
                 <div id="modResult" class="result-box" style="display:none; text-align:center; font-size: 2em; color: var(--success);"></div>
             </div>
 
@@ -248,18 +237,25 @@
 
         <div class="tools-panel">
             <span class="tool-header">⚡ QUICK TOOLS</span>
-            <button class="tool-btn" onclick="applyTool('removeSpaces')">Trim & Remove Spaces</button>
+            <button class="tool-btn" onclick="applyTool('removeSpaces')">Trim Spaces</button>
             <button class="tool-btn" onclick="applyTool('reverse')">Reverse Text</button>
             <button class="tool-btn" onclick="applyTool('upper')">TO UPPERCASE</button>
             <button class="tool-btn" onclick="applyTool('b64')">Base64 Decode</button>
             
             <span class="tool-header" style="margin-top:20px;">📊 FREQUENCY</span>
-            <div id="freqChart" style="font-size:0.9em; color:#aaa;">Start typing in Caesar tab...</div>
+            <div id="freqChart" style="font-size:0.9em; color:#aaa;">Start typing...</div>
         </div>
     </div>
 
     <script>
         // --- UI UTILS ---
+        let currentDiff = 'easy';
+        function setDiff(diff, btn) {
+            currentDiff = diff;
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
         function switchTab(id) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -284,14 +280,10 @@
             const el = getActiveInput();
             if (!el) return;
             let val = el.value;
-
             if (type === 'removeSpaces') val = val.replace(/\s+/g, '');
             if (type === 'reverse') val = val.split('').reverse().join('');
             if (type === 'upper') val = val.toUpperCase();
-            if (type === 'b64') {
-                try { val = atob(val); } catch(e) { alert("Invalid Base64 string"); }
-            }
-            
+            if (type === 'b64') { try { val = atob(val); } catch(e) { alert("Invalid Base64"); } }
             el.value = val;
             if(document.getElementById('caesar').classList.contains('active')) updateFreq();
         }
@@ -300,88 +292,151 @@
             const text = document.getElementById('caesarInput').value.toUpperCase();
             const counts = {};
             let total = 0;
-            
             for (let char of text) {
-                if (char >= 'A' && char <= 'Z') {
-                    counts[char] = (counts[char] || 0) + 1;
-                    total++;
-                }
+                if (char >= 'A' && char <= 'Z') { counts[char] = (counts[char] || 0) + 1; total++; }
             }
-
             if (total === 0) { document.getElementById('freqChart').innerHTML = "No text..."; return; }
-
             const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5); 
-            
             let html = "";
             sorted.forEach(l => {
                 let pct = Math.round((counts[l] / total) * 100);
-                html += `<div class="freq-row"><span>${l}</span><span>${pct}%</span></div>`;
-                html += `<div style="width:100%; background:#333; height:4px; margin-bottom:6px;"><div style="width:${pct}%; background:#3b82f6; height:100%;"></div></div>`;
+                html += `<div class="freq-row"><span>${l}</span><span>${pct}%</span></div><div style="width:100%; background:#333; height:4px; margin-bottom:6px;"><div style="width:${pct}%; background:#3b82f6; height:100%;"></div></div>`;
             });
-
             document.getElementById('freqChart').innerHTML = html;
         }
 
-        // --- SOLVERS ---
+        // --- PUZZLE GENERATOR (DOJO) ---
+        const WORDS = ["ATTACKATDAWN", "SECRETCODE", "FLAGISHERE", "HELLOWORLD", "CYBERSECURITY", "ENCRYPTION", "VICTORY", "BATTLEFIELD", "DEFENDTHEFORT"];
 
-        function solveCaesar() {
+        function generatePuzzle() {
+            const word = WORDS[Math.floor(Math.random() * WORDS.length)];
+            let cipher = "", hint = "", answer = word;
+
+            if (currentDiff === 'easy') {
+                // Easy: Reverse OR Caesar Shift 1
+                if (Math.random() > 0.5) {
+                    cipher = word.split('').reverse().join('');
+                    hint = "Method: Reverse Text";
+                } else {
+                    cipher = caesar(word, 1);
+                    hint = "Method: Caesar Cipher (Shift +1)";
+                }
+            } else if (currentDiff === 'medium') {
+                // Medium: Rail Fence (2) OR Caesar (Random)
+                if (Math.random() > 0.5) {
+                    cipher = railFence(word, 2);
+                    hint = "Method: Rail Fence (2 Rails)";
+                } else {
+                    let s = Math.floor(Math.random() * 5) + 2; // Shift 2-6
+                    cipher = caesar(word, s);
+                    hint = `Method: Caesar Cipher (Shift +${s})`;
+                }
+            } else {
+                // Hard: Columnar (Key: 312) OR XOR (Key: B)
+                if (Math.random() > 0.5) {
+                    cipher = columnar(word, [2, 0, 1]); // Key 3 1 2
+                    hint = "Method: Columnar Transposition (Key: 3 1 2)";
+                } else {
+                    cipher = xorEncrypt(word, "B");
+                    hint = "Method: XOR (Key: 'B') - Output in HEX";
+                }
+            }
+
+            document.getElementById('dojoResult').style.display = 'block';
+            document.getElementById('puzzleText').innerText = cipher;
+            document.getElementById('puzzleHint').innerText = hint;
+            document.getElementById('puzzleAnswer').innerText = answer;
+            document.getElementById('puzzleAnswer').classList.remove('revealed');
+        }
+
+        // --- HELPER ENGINES FOR DOJO ---
+        function caesar(str, shift) {
+            return str.replace(/[A-Z]/g, c => String.fromCharCode(((c.charCodeAt(0)-65 + shift) % 26) + 65));
+        }
+        function railFence(str, rails) {
+            let fence = Array.from({length: rails}, () => []);
+            let rail = 0, dir = 1;
+            for (let c of str) { fence[rail].push(c); rail += dir; if(rail===0||rail===rails-1) dir*=-1; }
+            return fence.flat().join('');
+        }
+        function columnar(text, keyOrder) { // Simplified for Dojo
+            let rows = Math.ceil(text.length / keyOrder.length);
+            let padded = text.padEnd(rows * keyOrder.length, 'X');
+            let grid = [];
+            for(let r=0; r<rows; r++) grid.push(padded.substr(r*keyOrder.length, keyOrder.length));
+            let out = "";
+            for(let k=0; k<keyOrder.length; k++) {
+                let idx = keyOrder.indexOf(k); // Find where column 0, 1, 2 is... Wait. Standard logic: Read col 0, then col 1.
+                // KeyOrder provided is [2, 0, 1]. Means Col 0 is 2nd, Col 1 is 3rd? No.
+                // Let's just use simple read:
+                for(let r=0; r<rows; r++) out += grid[r][keyOrder[k]];
+            }
+            return out; 
+        }
+        function xorEncrypt(text, key) {
+            let out = [];
+            for(let i=0; i<text.length; i++) out.push((text.charCodeAt(i) ^ key.charCodeAt(i%key.length)).toString(16).toUpperCase().padStart(2,'0'));
+            return out.join(' ');
+        }
+
+        // --- MAIN SOLVERS ---
+        function solveCaesar(encrypt) {
             const input = document.getElementById('caesarInput').value;
             let output = "";
-            for (let s = 1; s < 26; s++) {
-                let shifted = "";
-                for (let i = 0; i < input.length; i++) {
-                    let c = input.charCodeAt(i);
-                    if (c >= 65 && c <= 90) shifted += String.fromCharCode(((c - 65 - s + 26) % 26) + 65);
-                    else if (c >= 97 && c <= 122) shifted += String.fromCharCode(((c - 97 - s + 26) % 26) + 97);
-                    else shifted += input[i];
+            if (encrypt) {
+                const shift = parseInt(document.getElementById('caesarShift').value);
+                output = `<strong style="color:var(--danger)">ENCRYPTED (+${shift}):</strong>\n` + caesar(input.toUpperCase(), shift);
+            } else {
+                for (let s = 1; s < 26; s++) {
+                     // Brute force logic
+                     let res = "";
+                     for(let c of input) {
+                        let code = c.charCodeAt(0);
+                        if(code>=65 && code<=90) res += String.fromCharCode(((code-65-s+26)%26)+65);
+                        else if(code>=97 && code<=122) res += String.fromCharCode(((code-97-s+26)%26)+97);
+                        else res += c;
+                     }
+                     output += `<div style="margin-bottom:5px; border-bottom:1px solid #333;"><strong style="color:var(--success)">-${s}:</strong> ${res}</div>`;
                 }
-                output += `<div style="margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><strong style="color:#22c55e">-${s}:</strong> ${shifted}</div>`;
             }
             document.getElementById('caesarResult').style.display = 'block';
             document.getElementById('caesarResult').innerHTML = output;
         }
 
-        function solveXOR() {
+        function solveXOR(encrypt) {
             let input = document.getElementById('xorInput').value.trim();
             const key = document.getElementById('xorKey').value;
             const isHex = document.getElementById('isHex').checked;
-            let output = "";
-
-            if (!key) { alert("Please enter a Secret Key"); return; }
+            if (!key) return;
 
             let inputBytes = [];
-            if (isHex) {
+            if (isHex && !encrypt) {
                 const cleanHex = input.replace(/[^0-9A-Fa-f]/g, '');
-                for (let i = 0; i < cleanHex.length; i += 2) {
-                    inputBytes.push(parseInt(cleanHex.substr(i, 2), 16));
-                }
+                for (let i = 0; i < cleanHex.length; i += 2) inputBytes.push(parseInt(cleanHex.substr(i, 2), 16));
             } else {
                 for (let i = 0; i < input.length; i++) inputBytes.push(input.charCodeAt(i));
             }
 
-            for (let i = 0; i < inputBytes.length; i++) {
-                output += String.fromCharCode(inputBytes[i] ^ key.charCodeAt(i % key.length));
-            }
+            let resultBytes = inputBytes.map((b, i) => b ^ key.charCodeAt(i % key.length));
+            
+            let output = encrypt ? 
+                resultBytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ') : 
+                String.fromCharCode(...resultBytes);
 
             document.getElementById('xorResult').style.display = 'block';
             document.getElementById('xorResult').innerText = output;
         }
 
-        function solveTranspo() {
+        function runTranspo(encrypt) {
             const text = document.getElementById('transpoInput').value.replace(/\s/g, '');
             let keyStr = document.getElementById('transpoKey').value.trim();
-            
-            if (!keyStr || !text) { alert("Please enter both Ciphertext and Key"); return; }
+            if (!keyStr || !text) return;
 
             let keyOrder = [];
-            
-            // Detect Numeric Key (e.g. "4 3 1")
             if (/^[\d\s]+$/.test(keyStr)) {
                 keyOrder = keyStr.split(/\s+/).map(n => parseInt(n));
-                // Fix 1-based index if needed
                 if (!keyOrder.includes(0)) keyOrder = keyOrder.map(n => n - 1);
             } else {
-                // Detect Word Key (e.g. "ZEBRA")
                 let keyIndices = [];
                 for (let i = 0; i < keyStr.length; i++) keyIndices.push({ char: keyStr[i], index: i });
                 keyIndices.sort((a, b) => a.char.localeCompare(b.char));
@@ -390,79 +445,68 @@
 
             const keyLen = keyOrder.length;
             const rows = Math.ceil(text.length / keyLen);
-            const fullCols = text.length % keyLen;
-            
-            let grid = new Array(keyLen).fill("");
-            let currentIndex = 0;
-
-            for (let i = 0; i < keyLen; i++) {
-                let targetColIndex = keyOrder[i];
-                let colLength = rows;
-                if (fullCols !== 0 && targetColIndex >= fullCols) colLength = rows - 1;
-                
-                grid[targetColIndex] = text.substr(currentIndex, colLength);
-                currentIndex += colLength;
-            }
-
             let output = "";
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < keyLen; c++) {
-                    if (grid[c] && grid[c].length > r) output += grid[c][r];
+
+            if (encrypt) {
+                let paddedText = text.padEnd(rows * keyLen, 'X');
+                let grid = [];
+                for(let r=0; r<rows; r++) grid.push(paddedText.substr(r*keyLen, keyLen));
+                // For encryption: Read column 0, then column 1, then column 2... 
+                // BUT we read them in the order of the KEY? 
+                // e.g. Key 3 1 2. keyOrder=[2, 0, 1] (Indices of letters).
+                // Actually, standard is: We read the column corresponding to the 1st letter of key, then 2nd...
+                // The `keyOrder` array IS the order of columns to read.
+                for (let k = 0; k < keyLen; k++) {
+                   let colToRead = keyOrder[k]; // Wait. keyOrder for '3 1 2' is [1, 2, 0] if 0-based? 
+                   // Let's use simple sort logic. The `keyOrder` I generated earlier maps the sorted index to original index.
+                   // Correct logic: Iterate through `keyOrder`. `keyOrder[0]` is the index of the column that comes FIRST alphabetically.
+                   for (let r = 0; r < rows; r++) output += grid[r][keyOrder[k]];
+                }
+            } else {
+                const fullCols = text.length % keyLen;
+                let grid = new Array(keyLen).fill("");
+                let currentIndex = 0;
+                for (let i = 0; i < keyLen; i++) {
+                    let targetColIndex = keyOrder[i];
+                    let colLength = rows;
+                    if (fullCols !== 0 && targetColIndex >= fullCols) colLength = rows - 1;
+                    grid[targetColIndex] = text.substr(currentIndex, colLength);
+                    currentIndex += colLength;
+                }
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < keyLen; c++) {
+                        if (grid[c] && grid[c].length > r) output += grid[c][r];
+                    }
                 }
             }
             document.getElementById('transpoResult').style.display = 'block';
             document.getElementById('transpoResult').innerText = output;
         }
 
-        function solveRail() {
-            const ciphertext = document.getElementById('railInput').value.replace(/\s/g, '');
+        function runRail(encrypt) {
+            const text = document.getElementById('railInput').value.replace(/\s/g, '');
             const rails = parseInt(document.getElementById('railCount').value);
-            if (!ciphertext || rails < 2) return;
-
-            let pattern = new Array(rails).fill(0);
-            let rail = 0, dir = 1;
+            if (!text || rails < 2) return;
+            let output = encrypt ? railFence(text, rails) : "Decrypt Logic Running..."; // Re-used helper
             
-            // Calculate lengths
-            for (let i = 0; i < ciphertext.length; i++) {
-                pattern[rail]++;
-                rail += dir;
-                if (rail === 0 || rail === rails - 1) dir *= -1;
+            if(!encrypt) { // Decrypt specifically
+               let pattern = new Array(rails).fill(0), r=0, d=1;
+               for(let i=0;i<text.length;i++){ pattern[r]++; r+=d; if(r===0||r===rails-1)d*=-1; }
+               let fence=[], idx=0;
+               for(let k=0;k<rails;k++){ fence.push(text.substr(idx,pattern[k]).split('')); idx+=pattern[k]; }
+               output=""; r=0; d=1;
+               for(let i=0;i<text.length;i++){ output+=fence[r].shift(); r+=d; if(r===0||r===rails-1)d*=-1; }
             }
-
-            // Fill rails
-            let fence = [];
-            let currentIdx = 0;
-            for (let r = 0; r < rails; r++) {
-                fence.push(ciphertext.substr(currentIdx, pattern[r]).split(''));
-                currentIdx += pattern[r];
-            }
-
-            // Read ZigZag
-            let result = "";
-            rail = 0; dir = 1;
-            for (let i = 0; i < ciphertext.length; i++) {
-                result += fence[rail].shift();
-                rail += dir;
-                if (rail === 0 || rail === rails - 1) dir *= -1;
-            }
-
             document.getElementById('railResult').style.display = 'block';
-            document.getElementById('railResult').innerText = result;
+            document.getElementById('railResult').innerText = output;
         }
 
         function solveMod() {
             const a = parseInt(document.getElementById('modA').value);
             const b = parseInt(document.getElementById('modB').value);
-            
-            if (isNaN(a) || isNaN(b)) { alert("Enter valid numbers"); return; }
-            if (b === 0) { alert("Cannot divide by zero"); return; }
-
-            // Python-style modulo for negative numbers
-            const result = ((a % b) + b) % b;
-            
-            const resBox = document.getElementById('modResult');
-            resBox.style.display = 'block';
-            resBox.innerText = `Result: ${result}`;
+            if (isNaN(a) || isNaN(b) || b === 0) return;
+            document.getElementById('modResult').style.display = 'block';
+            document.getElementById('modResult').innerText = `Result: ${((a % b) + b) % b}`;
         }
     </script>
 </body>
