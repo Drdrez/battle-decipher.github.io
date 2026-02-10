@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v7.0 (Training Dojo)</title>
+    <title>Battle Decipher v8.0 (Specific Dojo)</title>
     <style>
         :root { 
             --bg: #0f172a; 
@@ -12,7 +12,7 @@
             --accent: #3b82f6; 
             --success: #22c55e; 
             --danger: #f59e0b;
-            --purple: #a855f7; /* For Dojo */
+            --purple: #a855f7; 
         }
         body { 
             font-family: 'Courier New', monospace; 
@@ -91,8 +91,20 @@
         button:hover { opacity: 0.9; }
         .btn-decrypt { background: var(--success); }
         .btn-encrypt { background: var(--danger); }
-        .btn-dojo { background: var(--purple); color: white; }
         .tool-btn { background: #334155; color: white; width: 100%; margin-bottom: 8px; text-align: left; padding: 10px; }
+
+        /* DOJO SPECIFIC BUTTONS */
+        .dojo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-gen { background: #334155; color: white; border: 1px solid #475569; padding: 15px; font-size: 0.9em; }
+        .btn-gen:hover { background: var(--purple); border-color: var(--purple); }
+        
+        .difficulty-btns { display: flex; gap: 10px; margin-bottom: 20px; }
+        .diff-btn { padding: 10px; border: 2px solid #334155; background: #0f172a; color: #aaa; cursor: pointer; text-align: center; flex: 1; font-weight: bold; border-radius: 4px; }
+        .diff-btn:hover { border-color: var(--purple); color: white; }
+        .diff-btn.selected { background: var(--purple); color: white; border-color: var(--purple); }
+        
+        .spoiler { filter: blur(5px); cursor: pointer; transition: 0.3s; background: #333; padding: 10px; border-radius: 4px; }
+        .spoiler:hover, .spoiler.revealed { filter: blur(0); background: #000; }
 
         /* RESULTS */
         .result-box { 
@@ -105,24 +117,8 @@
             font-size: 1.05em;
         }
         
-        /* DOJO SPECIFIC */
-        .difficulty-btns { display: flex; gap: 10px; margin-bottom: 20px; }
-        .diff-btn { padding: 15px; border: 2px solid #334155; background: #0f172a; color: #aaa; cursor: pointer; text-align: center; flex: 1; font-weight: bold; }
-        .diff-btn:hover { border-color: var(--purple); color: white; }
-        .diff-btn.selected { background: var(--purple); color: white; border-color: var(--purple); }
-        .spoiler { filter: blur(5px); cursor: pointer; transition: 0.3s; }
-        .spoiler:hover, .spoiler.revealed { filter: blur(0); }
-
         /* CHECKBOX ROW */
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            background: #1e293b;
-            padding: 5px 0;
-        }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer; background: #1e293b; padding: 5px 0; }
         .checkbox-row input { width: 20px; height: 20px; cursor: pointer; }
 
         /* SIDEBAR & MISC */
@@ -136,7 +132,7 @@
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v7.0</h1>
+    <h1>🔐 Battle Decipher v8.0</h1>
 
     <div class="tabs">
         <div class="tab dojo-tab active" onclick="switchTab('dojo')">🥋 Training Dojo</div>
@@ -151,16 +147,20 @@
         <div>
             
             <div id="dojo" class="panel active">
-                <h3>Generate Practice Puzzle</h3>
-                <p class="note">Select a difficulty to generate a random cipher.</p>
-
+                <h3>Select Difficulty</h3>
                 <div class="difficulty-btns">
-                    <div class="diff-btn" onclick="setDiff('easy', this)">EASY</div>
+                    <div class="diff-btn selected" onclick="setDiff('easy', this)">EASY</div>
                     <div class="diff-btn" onclick="setDiff('medium', this)">MEDIUM</div>
                     <div class="diff-btn" onclick="setDiff('hard', this)">HARD</div>
                 </div>
 
-                <button class="btn-dojo" onclick="generatePuzzle()">GENERATE CHALLENGE</button>
+                <h3>Generate Specific Challenge</h3>
+                <div class="dojo-grid">
+                    <button class="btn-gen" onclick="generatePuzzle('caesar')">🏛️ Generate Caesar</button>
+                    <button class="btn-gen" onclick="generatePuzzle('xor')">⚡ Generate XOR</button>
+                    <button class="btn-gen" onclick="generatePuzzle('transpo')">📊 Generate Transposition</button>
+                    <button class="btn-gen" onclick="generatePuzzle('rail')">🛤️ Generate Rail Fence</button>
+                </div>
 
                 <div id="dojoResult" class="result-box" style="display:none; border-left-color: var(--purple);">
                     <div style="margin-bottom:10px; color: #aaa;">CIPHERTEXT (Copy this):</div>
@@ -170,7 +170,7 @@
                     <div id="puzzleHint" style="color: var(--accent); margin-bottom:20px;"></div>
 
                     <div style="margin-bottom:5px; color: #aaa;">ANSWER (Hover to Reveal):</div>
-                    <div id="puzzleAnswer" class="spoiler" style="background: #333; padding: 5px;"></div>
+                    <div id="puzzleAnswer" class="spoiler"></div>
                 </div>
             </div>
 
@@ -305,41 +305,56 @@
             document.getElementById('freqChart').innerHTML = html;
         }
 
-        // --- PUZZLE GENERATOR (DOJO) ---
+        // --- PUZZLE GENERATOR (SPECIFIC TYPES) ---
         const WORDS = ["ATTACKATDAWN", "SECRETCODE", "FLAGISHERE", "HELLOWORLD", "CYBERSECURITY", "ENCRYPTION", "VICTORY", "BATTLEFIELD", "DEFENDTHEFORT"];
 
-        function generatePuzzle() {
+        function generatePuzzle(type) {
             const word = WORDS[Math.floor(Math.random() * WORDS.length)];
             let cipher = "", hint = "", answer = word;
 
-            if (currentDiff === 'easy') {
-                // Easy: Reverse OR Caesar Shift 1
-                if (Math.random() > 0.5) {
-                    cipher = word.split('').reverse().join('');
-                    hint = "Method: Reverse Text";
+            if (type === 'caesar') {
+                let shift = 1;
+                if (currentDiff === 'easy') shift = 1;
+                else if (currentDiff === 'medium') shift = 13;
+                else shift = Math.floor(Math.random() * 20) + 2;
+                
+                cipher = caesarEngine(word, shift);
+                hint = `Method: Caesar (Shift: ${currentDiff === 'hard' ? '???' : '+' + shift})`;
+            } 
+            else if (type === 'xor') {
+                let key = "A";
+                if (currentDiff === 'easy') {
+                    key = "X"; 
+                    cipher = xorEncrypt(word, key, false); // Text output
+                    hint = "Method: XOR (Key: 'X') - Output TEXT";
                 } else {
-                    cipher = caesar(word, 1);
-                    hint = "Method: Caesar Cipher (Shift +1)";
+                    key = currentDiff === 'medium' ? "KEY" : "HARD";
+                    cipher = xorEncrypt(word, key, true); // Hex output
+                    hint = `Method: XOR (Key: '${key}') - Output HEX`;
                 }
-            } else if (currentDiff === 'medium') {
-                // Medium: Rail Fence (2) OR Caesar (Random)
-                if (Math.random() > 0.5) {
-                    cipher = railFence(word, 2);
-                    hint = "Method: Rail Fence (2 Rails)";
+            } 
+            else if (type === 'transpo') {
+                let key = [0,1];
+                if (currentDiff === 'easy') {
+                    key = [1,0]; // Swap 2 cols
+                    hint = "Method: Columnar (Key: 2 1)";
+                } else if (currentDiff === 'medium') {
+                    key = [2,0,1]; // 3 cols
+                    hint = "Method: Columnar (Key: 3 1 2)";
                 } else {
-                    let s = Math.floor(Math.random() * 5) + 2; // Shift 2-6
-                    cipher = caesar(word, s);
-                    hint = `Method: Caesar Cipher (Shift +${s})`;
+                    key = [3,0,2,1]; // 4 cols
+                    hint = "Method: Columnar (Key: 4 1 3 2)";
                 }
-            } else {
-                // Hard: Columnar (Key: 312) OR XOR (Key: B)
-                if (Math.random() > 0.5) {
-                    cipher = columnar(word, [2, 0, 1]); // Key 3 1 2
-                    hint = "Method: Columnar Transposition (Key: 3 1 2)";
-                } else {
-                    cipher = xorEncrypt(word, "B");
-                    hint = "Method: XOR (Key: 'B') - Output in HEX";
-                }
+                cipher = columnarEngine(word, key);
+            } 
+            else if (type === 'rail') {
+                let rails = 2;
+                if (currentDiff === 'easy') rails = 2;
+                else if (currentDiff === 'medium') rails = 3;
+                else rails = 4;
+                
+                cipher = railFence(word, rails);
+                hint = `Method: Rail Fence (${rails} Rails)`;
             }
 
             document.getElementById('dojoResult').style.display = 'block';
@@ -349,8 +364,8 @@
             document.getElementById('puzzleAnswer').classList.remove('revealed');
         }
 
-        // --- HELPER ENGINES FOR DOJO ---
-        function caesar(str, shift) {
+        // --- HELPER ENGINES ---
+        function caesarEngine(str, shift) {
             return str.replace(/[A-Z]/g, c => String.fromCharCode(((c.charCodeAt(0)-65 + shift) % 26) + 65));
         }
         function railFence(str, rails) {
@@ -359,24 +374,25 @@
             for (let c of str) { fence[rail].push(c); rail += dir; if(rail===0||rail===rails-1) dir*=-1; }
             return fence.flat().join('');
         }
-        function columnar(text, keyOrder) { // Simplified for Dojo
+        function columnarEngine(text, keyOrder) {
             let rows = Math.ceil(text.length / keyOrder.length);
             let padded = text.padEnd(rows * keyOrder.length, 'X');
             let grid = [];
             for(let r=0; r<rows; r++) grid.push(padded.substr(r*keyOrder.length, keyOrder.length));
             let out = "";
             for(let k=0; k<keyOrder.length; k++) {
-                let idx = keyOrder.indexOf(k); // Find where column 0, 1, 2 is... Wait. Standard logic: Read col 0, then col 1.
-                // KeyOrder provided is [2, 0, 1]. Means Col 0 is 2nd, Col 1 is 3rd? No.
-                // Let's just use simple read:
                 for(let r=0; r<rows; r++) out += grid[r][keyOrder[k]];
             }
             return out; 
         }
-        function xorEncrypt(text, key) {
+        function xorEncrypt(text, key, toHex) {
             let out = [];
-            for(let i=0; i<text.length; i++) out.push((text.charCodeAt(i) ^ key.charCodeAt(i%key.length)).toString(16).toUpperCase().padStart(2,'0'));
-            return out.join(' ');
+            for(let i=0; i<text.length; i++) {
+                let val = text.charCodeAt(i) ^ key.charCodeAt(i%key.length);
+                if(toHex) out.push(val.toString(16).toUpperCase().padStart(2,'0'));
+                else out.push(String.fromCharCode(val));
+            }
+            return toHex ? out.join(' ') : out.join('');
         }
 
         // --- MAIN SOLVERS ---
@@ -385,18 +401,10 @@
             let output = "";
             if (encrypt) {
                 const shift = parseInt(document.getElementById('caesarShift').value);
-                output = `<strong style="color:var(--danger)">ENCRYPTED (+${shift}):</strong>\n` + caesar(input.toUpperCase(), shift);
+                output = `<strong style="color:var(--danger)">ENCRYPTED (+${shift}):</strong>\n` + caesarEngine(input.toUpperCase(), shift);
             } else {
                 for (let s = 1; s < 26; s++) {
-                     // Brute force logic
-                     let res = "";
-                     for(let c of input) {
-                        let code = c.charCodeAt(0);
-                        if(code>=65 && code<=90) res += String.fromCharCode(((code-65-s+26)%26)+65);
-                        else if(code>=97 && code<=122) res += String.fromCharCode(((code-97-s+26)%26)+97);
-                        else res += c;
-                     }
-                     output += `<div style="margin-bottom:5px; border-bottom:1px solid #333;"><strong style="color:var(--success)">-${s}:</strong> ${res}</div>`;
+                     output += `<div style="margin-bottom:5px; border-bottom:1px solid #333;"><strong style="color:var(--success)">-${s}:</strong> ${caesarEngine(input.toUpperCase(), 26-s)}</div>`;
                 }
             }
             document.getElementById('caesarResult').style.display = 'block';
@@ -418,7 +426,6 @@
             }
 
             let resultBytes = inputBytes.map((b, i) => b ^ key.charCodeAt(i % key.length));
-            
             let output = encrypt ? 
                 resultBytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ') : 
                 String.fromCharCode(...resultBytes);
@@ -443,26 +450,13 @@
                 keyOrder = keyIndices.map(k => k.index);
             }
 
-            const keyLen = keyOrder.length;
-            const rows = Math.ceil(text.length / keyLen);
-            let output = "";
-
-            if (encrypt) {
-                let paddedText = text.padEnd(rows * keyLen, 'X');
-                let grid = [];
-                for(let r=0; r<rows; r++) grid.push(paddedText.substr(r*keyLen, keyLen));
-                // For encryption: Read column 0, then column 1, then column 2... 
-                // BUT we read them in the order of the KEY? 
-                // e.g. Key 3 1 2. keyOrder=[2, 0, 1] (Indices of letters).
-                // Actually, standard is: We read the column corresponding to the 1st letter of key, then 2nd...
-                // The `keyOrder` array IS the order of columns to read.
-                for (let k = 0; k < keyLen; k++) {
-                   let colToRead = keyOrder[k]; // Wait. keyOrder for '3 1 2' is [1, 2, 0] if 0-based? 
-                   // Let's use simple sort logic. The `keyOrder` I generated earlier maps the sorted index to original index.
-                   // Correct logic: Iterate through `keyOrder`. `keyOrder[0]` is the index of the column that comes FIRST alphabetically.
-                   for (let r = 0; r < rows; r++) output += grid[r][keyOrder[k]];
-                }
+            if(encrypt) {
+                document.getElementById('transpoResult').style.display = 'block';
+                document.getElementById('transpoResult').innerText = columnarEngine(text, keyOrder);
             } else {
+                // Decrypt Logic
+                const keyLen = keyOrder.length;
+                const rows = Math.ceil(text.length / keyLen);
                 const fullCols = text.length % keyLen;
                 let grid = new Array(keyLen).fill("");
                 let currentIndex = 0;
@@ -473,28 +467,32 @@
                     grid[targetColIndex] = text.substr(currentIndex, colLength);
                     currentIndex += colLength;
                 }
+                let output = "";
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < keyLen; c++) {
                         if (grid[c] && grid[c].length > r) output += grid[c][r];
                     }
                 }
+                document.getElementById('transpoResult').style.display = 'block';
+                document.getElementById('transpoResult').innerText = output;
             }
-            document.getElementById('transpoResult').style.display = 'block';
-            document.getElementById('transpoResult').innerText = output;
         }
 
         function runRail(encrypt) {
             const text = document.getElementById('railInput').value.replace(/\s/g, '');
             const rails = parseInt(document.getElementById('railCount').value);
             if (!text || rails < 2) return;
-            let output = encrypt ? railFence(text, rails) : "Decrypt Logic Running..."; // Re-used helper
+            let output = "";
             
-            if(!encrypt) { // Decrypt specifically
+            if(encrypt) {
+                output = railFence(text, rails);
+            } else {
+                // Decrypt
                let pattern = new Array(rails).fill(0), r=0, d=1;
                for(let i=0;i<text.length;i++){ pattern[r]++; r+=d; if(r===0||r===rails-1)d*=-1; }
                let fence=[], idx=0;
                for(let k=0;k<rails;k++){ fence.push(text.substr(idx,pattern[k]).split('')); idx+=pattern[k]; }
-               output=""; r=0; d=1;
+               r=0; d=1;
                for(let i=0;i<text.length;i++){ output+=fence[r].shift(); r+=d; if(r===0||r===rails-1)d*=-1; }
             }
             document.getElementById('railResult').style.display = 'block';
