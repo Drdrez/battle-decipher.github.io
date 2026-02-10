@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v8.0 (Specific Dojo)</title>
+    <title>Battle Decipher v9.0 (+/- Shift Update)</title>
     <style>
         :root { 
             --bg: #0f172a; 
@@ -132,11 +132,11 @@
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v8.0</h1>
+    <h1>🔐 Battle Decipher v9.0</h1>
 
     <div class="tabs">
-        <div class="tab dojo-tab active" onclick="switchTab('dojo')">🥋 Training Dojo</div>
-        <div class="tab" onclick="switchTab('caesar')">Caesar</div>
+        <div class="tab dojo-tab" onclick="switchTab('dojo')">🥋 Training Dojo</div>
+        <div class="tab active" onclick="switchTab('caesar')">Caesar</div>
         <div class="tab" onclick="switchTab('xor')">XOR</div>
         <div class="tab" onclick="switchTab('transpo')">Columnar</div>
         <div class="tab" onclick="switchTab('rail')">Rail Fence</div>
@@ -146,14 +146,13 @@
     <div class="grid">
         <div>
             
-            <div id="dojo" class="panel active">
+            <div id="dojo" class="panel">
                 <h3>Select Difficulty</h3>
                 <div class="difficulty-btns">
                     <div class="diff-btn selected" onclick="setDiff('easy', this)">EASY</div>
                     <div class="diff-btn" onclick="setDiff('medium', this)">MEDIUM</div>
                     <div class="diff-btn" onclick="setDiff('hard', this)">HARD</div>
                 </div>
-
                 <h3>Generate Specific Challenge</h3>
                 <div class="dojo-grid">
                     <button class="btn-gen" onclick="generatePuzzle('caesar')">🏛️ Generate Caesar</button>
@@ -161,29 +160,34 @@
                     <button class="btn-gen" onclick="generatePuzzle('transpo')">📊 Generate Transposition</button>
                     <button class="btn-gen" onclick="generatePuzzle('rail')">🛤️ Generate Rail Fence</button>
                 </div>
-
                 <div id="dojoResult" class="result-box" style="display:none; border-left-color: var(--purple);">
                     <div style="margin-bottom:10px; color: #aaa;">CIPHERTEXT (Copy this):</div>
                     <div id="puzzleText" style="font-size:1.2em; color:white; margin-bottom:20px; user-select: text;"></div>
-                    
                     <div style="margin-bottom:5px; color: #aaa;">HINT:</div>
                     <div id="puzzleHint" style="color: var(--accent); margin-bottom:20px;"></div>
-
                     <div style="margin-bottom:5px; color: #aaa;">ANSWER (Hover to Reveal):</div>
                     <div id="puzzleAnswer" class="spoiler"></div>
                 </div>
             </div>
 
-            <div id="caesar" class="panel">
+            <div id="caesar" class="panel active">
                 <h3>Caesar / Shift</h3>
                 <textarea id="caesarInput" rows="3" placeholder="Enter message..." oninput="updateFreq()"></textarea>
+                
                 <div class="flex-row">
-                    <div><label>Shift (Key):</label><input type="number" id="caesarShift" value="3" min="1" max="25"></div>
-                    <div style="flex:2;"></div> 
+                    <div>
+                        <label>Shift Key (+ or -):</label>
+                        <input type="number" id="caesarShift" value="3" placeholder="e.g. 3 or -5">
+                    </div>
+                    <div style="flex:1; font-size:0.8em; color:#aaa; padding-top:25px;">
+                        Pos (+) = Right Shift<br>
+                        Neg (-) = Left Shift
+                    </div> 
                 </div>
+
                 <div class="btn-group">
-                    <button class="btn-decrypt" onclick="solveCaesar(false)">🔓 DECRYPT</button>
-                    <button class="btn-encrypt" onclick="solveCaesar(true)">🔒 ENCRYPT</button>
+                    <button class="btn-decrypt" onclick="solveCaesar(false)">🔓 DECRYPT (Brute Force)</button>
+                    <button class="btn-encrypt" onclick="solveCaesar(true)">🔒 ENCRYPT (Apply Shift)</button>
                 </div>
                 <div id="caesarResult" class="result-box" style="display:none;"></div>
             </div>
@@ -305,7 +309,7 @@
             document.getElementById('freqChart').innerHTML = html;
         }
 
-        // --- PUZZLE GENERATOR (SPECIFIC TYPES) ---
+        // --- PUZZLE GENERATOR ---
         const WORDS = ["ATTACKATDAWN", "SECRETCODE", "FLAGISHERE", "HELLOWORLD", "CYBERSECURITY", "ENCRYPTION", "VICTORY", "BATTLEFIELD", "DEFENDTHEFORT"];
 
         function generatePuzzle(type) {
@@ -317,34 +321,25 @@
                 if (currentDiff === 'easy') shift = 1;
                 else if (currentDiff === 'medium') shift = 13;
                 else shift = Math.floor(Math.random() * 20) + 2;
-                
                 cipher = caesarEngine(word, shift);
                 hint = `Method: Caesar (Shift: ${currentDiff === 'hard' ? '???' : '+' + shift})`;
             } 
             else if (type === 'xor') {
                 let key = "A";
                 if (currentDiff === 'easy') {
-                    key = "X"; 
-                    cipher = xorEncrypt(word, key, false); // Text output
+                    key = "X"; cipher = xorEncrypt(word, key, false);
                     hint = "Method: XOR (Key: 'X') - Output TEXT";
                 } else {
                     key = currentDiff === 'medium' ? "KEY" : "HARD";
-                    cipher = xorEncrypt(word, key, true); // Hex output
+                    cipher = xorEncrypt(word, key, true);
                     hint = `Method: XOR (Key: '${key}') - Output HEX`;
                 }
             } 
             else if (type === 'transpo') {
                 let key = [0,1];
-                if (currentDiff === 'easy') {
-                    key = [1,0]; // Swap 2 cols
-                    hint = "Method: Columnar (Key: 2 1)";
-                } else if (currentDiff === 'medium') {
-                    key = [2,0,1]; // 3 cols
-                    hint = "Method: Columnar (Key: 3 1 2)";
-                } else {
-                    key = [3,0,2,1]; // 4 cols
-                    hint = "Method: Columnar (Key: 4 1 3 2)";
-                }
+                if (currentDiff === 'easy') { key = [1,0]; hint = "Method: Columnar (Key: 2 1)"; } 
+                else if (currentDiff === 'medium') { key = [2,0,1]; hint = "Method: Columnar (Key: 3 1 2)"; } 
+                else { key = [3,0,2,1]; hint = "Method: Columnar (Key: 4 1 3 2)"; }
                 cipher = columnarEngine(word, key);
             } 
             else if (type === 'rail') {
@@ -352,7 +347,6 @@
                 if (currentDiff === 'easy') rails = 2;
                 else if (currentDiff === 'medium') rails = 3;
                 else rails = 4;
-                
                 cipher = railFence(word, rails);
                 hint = `Method: Rail Fence (${rails} Rails)`;
             }
@@ -364,9 +358,15 @@
             document.getElementById('puzzleAnswer').classList.remove('revealed');
         }
 
-        // --- HELPER ENGINES ---
+        // --- ENGINES (UPDATED FOR NEGATIVES) ---
         function caesarEngine(str, shift) {
-            return str.replace(/[A-Z]/g, c => String.fromCharCode(((c.charCodeAt(0)-65 + shift) % 26) + 65));
+            // Updated to handle Negative Shifts correctly
+            return str.replace(/[A-Z]/g, c => {
+                const code = c.charCodeAt(0);
+                // The magic formula: ((code - 65 + shift) % 26 + 26) % 26
+                // Adding 26 before the last % ensures we wrap from A backwards to Z
+                return String.fromCharCode(((code - 65 + shift) % 26 + 26) % 26 + 65);
+            });
         }
         function railFence(str, rails) {
             let fence = Array.from({length: rails}, () => []);
@@ -400,11 +400,13 @@
             const input = document.getElementById('caesarInput').value;
             let output = "";
             if (encrypt) {
+                // Now accepts negative numbers
                 const shift = parseInt(document.getElementById('caesarShift').value);
-                output = `<strong style="color:var(--danger)">ENCRYPTED (+${shift}):</strong>\n` + caesarEngine(input.toUpperCase(), shift);
+                const result = caesarEngine(input.toUpperCase(), shift);
+                output = `<strong style="color:var(--danger)">ENCRYPTED (Shift ${shift}):</strong>\n${result}`;
             } else {
                 for (let s = 1; s < 26; s++) {
-                     output += `<div style="margin-bottom:5px; border-bottom:1px solid #333;"><strong style="color:var(--success)">-${s}:</strong> ${caesarEngine(input.toUpperCase(), 26-s)}</div>`;
+                     output += `<div style="margin-bottom:5px; border-bottom:1px solid #333;"><strong style="color:var(--success)">-${s}:</strong> ${caesarEngine(input.toUpperCase(), -s)}</div>`;
                 }
             }
             document.getElementById('caesarResult').style.display = 'block';
@@ -454,7 +456,6 @@
                 document.getElementById('transpoResult').style.display = 'block';
                 document.getElementById('transpoResult').innerText = columnarEngine(text, keyOrder);
             } else {
-                // Decrypt Logic
                 const keyLen = keyOrder.length;
                 const rows = Math.ceil(text.length / keyLen);
                 const fullCols = text.length % keyLen;
@@ -487,7 +488,6 @@
             if(encrypt) {
                 output = railFence(text, rails);
             } else {
-                // Decrypt
                let pattern = new Array(rails).fill(0), r=0, d=1;
                for(let i=0;i<text.length;i++){ pattern[r]++; r+=d; if(r===0||r===rails-1)d*=-1; }
                let fence=[], idx=0;
