@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v9.0 (+/- Shift Update)</title>
+    <title>Battle Decipher v9.2 (No Rail)</title>
     <style>
         :root { 
             --bg: #0f172a; 
@@ -116,6 +116,13 @@
             word-break: break-all; 
             font-size: 1.05em;
         }
+        .result-row {
+            display: flex;
+            border-bottom: 1px solid #333;
+            padding: 4px 0;
+        }
+        .result-row:last-child { border: none; }
+        .lbl { width: 120px; color: var(--success); font-weight: bold; flex-shrink: 0; }
         
         /* CHECKBOX ROW */
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer; background: #1e293b; padding: 5px 0; }
@@ -127,19 +134,18 @@
         .freq-row { display: flex; justify-content: space-between; font-size: 0.8em; color: #94a3b8; padding: 2px 0; }
         .flex-row { display: flex; gap: 10px; align-items: center; }
         .flex-row > div { flex: 1; }
-        .note { font-size: 0.85em; color: #94a3b8; margin-bottom: 10px; font-style: italic; }
+        .note { font-size: 0.8em; color: #64748b; margin-top: 5px; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v9.0</h1>
+    <h1>🔐 Battle Decipher v9.2</h1>
 
     <div class="tabs">
         <div class="tab dojo-tab" onclick="switchTab('dojo')">🥋 Training Dojo</div>
-        <div class="tab active" onclick="switchTab('caesar')">Caesar</div>
+        <div class="tab active" onclick="switchTab('caesar')">Caesar / Shift</div>
         <div class="tab" onclick="switchTab('xor')">XOR</div>
         <div class="tab" onclick="switchTab('transpo')">Columnar</div>
-        <div class="tab" onclick="switchTab('rail')">Rail Fence</div>
         <div class="tab" onclick="switchTab('modulo')">Modulo</div>
     </div>
 
@@ -158,7 +164,6 @@
                     <button class="btn-gen" onclick="generatePuzzle('caesar')">🏛️ Generate Caesar</button>
                     <button class="btn-gen" onclick="generatePuzzle('xor')">⚡ Generate XOR</button>
                     <button class="btn-gen" onclick="generatePuzzle('transpo')">📊 Generate Transposition</button>
-                    <button class="btn-gen" onclick="generatePuzzle('rail')">🛤️ Generate Rail Fence</button>
                 </div>
                 <div id="dojoResult" class="result-box" style="display:none; border-left-color: var(--purple);">
                     <div style="margin-bottom:10px; color: #aaa;">CIPHERTEXT (Copy this):</div>
@@ -171,23 +176,23 @@
             </div>
 
             <div id="caesar" class="panel active">
-                <h3>Caesar / Shift</h3>
+                <h3>Caesar / Shift Cipher</h3>
                 <textarea id="caesarInput" rows="3" placeholder="Enter message..." oninput="updateFreq()"></textarea>
                 
                 <div class="flex-row">
                     <div>
-                        <label>Shift Key (+ or -):</label>
-                        <input type="number" id="caesarShift" value="3" placeholder="e.g. 3 or -5">
+                        <label>Shift N (+ or -):</label>
+                        <input type="number" id="caesarShift" placeholder="Empty = Brute Force">
                     </div>
-                    <div style="flex:1; font-size:0.8em; color:#aaa; padding-top:25px;">
-                        Pos (+) = Right Shift<br>
-                        Neg (-) = Left Shift
+                    <div style="flex:1.5; font-size:0.85em; color:#aaa; padding-top:25px; line-height: 1.4;">
+                        <span style="color:var(--success)">DECRYPT:</span> Key present = Reverse Shift.<br>
+                        Key empty = List all shifts (+/-).
                     </div> 
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn-decrypt" onclick="solveCaesar(false)">🔓 DECRYPT (Brute Force)</button>
-                    <button class="btn-encrypt" onclick="solveCaesar(true)">🔒 ENCRYPT (Apply Shift)</button>
+                    <button class="btn-decrypt" onclick="solveCaesar(false)">🔓 DECRYPT</button>
+                    <button class="btn-encrypt" onclick="solveCaesar(true)">🔒 ENCRYPT</button>
                 </div>
                 <div id="caesarResult" class="result-box" style="display:none;"></div>
             </div>
@@ -213,17 +218,6 @@
                     <button class="btn-encrypt" onclick="runTranspo(true)">🔒 ENCRYPT</button>
                 </div>
                 <div id="transpoResult" class="result-box" style="display:none;"></div>
-            </div>
-
-            <div id="rail" class="panel">
-                <h3>Rail Fence</h3>
-                <textarea id="railInput" rows="3" placeholder="Enter text..."></textarea>
-                <label>Rails:</label><input type="number" id="railCount" value="2" min="2" max="10">
-                <div class="btn-group">
-                    <button class="btn-decrypt" onclick="runRail(false)">🔓 DECRYPT</button>
-                    <button class="btn-encrypt" onclick="runRail(true)">🔒 ENCRYPT</button>
-                </div>
-                <div id="railResult" class="result-box" style="display:none;"></div>
             </div>
 
             <div id="modulo" class="panel">
@@ -276,7 +270,6 @@
             if(document.getElementById('caesar').classList.contains('active')) return document.getElementById('caesarInput');
             if(document.getElementById('xor').classList.contains('active')) return document.getElementById('xorInput');
             if(document.getElementById('transpo').classList.contains('active')) return document.getElementById('transpoInput');
-            if(document.getElementById('rail').classList.contains('active')) return document.getElementById('railInput');
             return null;
         }
 
@@ -342,14 +335,6 @@
                 else { key = [3,0,2,1]; hint = "Method: Columnar (Key: 4 1 3 2)"; }
                 cipher = columnarEngine(word, key);
             } 
-            else if (type === 'rail') {
-                let rails = 2;
-                if (currentDiff === 'easy') rails = 2;
-                else if (currentDiff === 'medium') rails = 3;
-                else rails = 4;
-                cipher = railFence(word, rails);
-                hint = `Method: Rail Fence (${rails} Rails)`;
-            }
 
             document.getElementById('dojoResult').style.display = 'block';
             document.getElementById('puzzleText').innerText = cipher;
@@ -358,21 +343,12 @@
             document.getElementById('puzzleAnswer').classList.remove('revealed');
         }
 
-        // --- ENGINES (UPDATED FOR NEGATIVES) ---
+        // --- ENGINES ---
         function caesarEngine(str, shift) {
-            // Updated to handle Negative Shifts correctly
             return str.replace(/[A-Z]/g, c => {
                 const code = c.charCodeAt(0);
-                // The magic formula: ((code - 65 + shift) % 26 + 26) % 26
-                // Adding 26 before the last % ensures we wrap from A backwards to Z
                 return String.fromCharCode(((code - 65 + shift) % 26 + 26) % 26 + 65);
             });
-        }
-        function railFence(str, rails) {
-            let fence = Array.from({length: rails}, () => []);
-            let rail = 0, dir = 1;
-            for (let c of str) { fence[rail].push(c); rail += dir; if(rail===0||rail===rails-1) dir*=-1; }
-            return fence.flat().join('');
         }
         function columnarEngine(text, keyOrder) {
             let rows = Math.ceil(text.length / keyOrder.length);
@@ -398,15 +374,30 @@
         // --- MAIN SOLVERS ---
         function solveCaesar(encrypt) {
             const input = document.getElementById('caesarInput').value;
+            const shiftInput = document.getElementById('caesarShift').value;
             let output = "";
+
             if (encrypt) {
-                // Now accepts negative numbers
-                const shift = parseInt(document.getElementById('caesarShift').value);
+                // ENCRYPT always requires a shift. Default to 0 if empty.
+                const shift = shiftInput ? parseInt(shiftInput) : 0;
                 const result = caesarEngine(input.toUpperCase(), shift);
-                output = `<strong style="color:var(--danger)">ENCRYPTED (Shift ${shift}):</strong>\n${result}`;
+                output = `<div class="result-row"><div class="lbl">ENCRYPTED:</div><div>${result}</div></div>`;
+                output += `<div class="note">Applied Shift: ${shift}</div>`;
             } else {
-                for (let s = 1; s < 26; s++) {
-                     output += `<div style="margin-bottom:5px; border-bottom:1px solid #333;"><strong style="color:var(--success)">-${s}:</strong> ${caesarEngine(input.toUpperCase(), -s)}</div>`;
+                // DECRYPT MODE
+                if (shiftInput !== "" && shiftInput !== null) {
+                    // KEY PROVIDED: Specific Decrypt (Inverse Shift)
+                    const shift = parseInt(shiftInput);
+                    const result = caesarEngine(input.toUpperCase(), -shift);
+                    output = `<div class="result-row"><div class="lbl">DECRYPTED:</div><div>${result}</div></div>`;
+                    output += `<div class="note">Applied Inverse Shift: ${-shift} (User Input: ${shift})</div>`;
+                } else {
+                    // KEY EMPTY: Brute Force (Caesar)
+                    for (let s = 1; s < 26; s++) {
+                        // Listing equivalence: Shift +1 is the same as Shift -25
+                        const result = caesarEngine(input.toUpperCase(), -s);
+                        output += `<div class="result-row"><div class="lbl">-${s} / +${26-s}:</div><div>${result}</div></div>`;
+                    }
                 }
             }
             document.getElementById('caesarResult').style.display = 'block';
@@ -477,26 +468,6 @@
                 document.getElementById('transpoResult').style.display = 'block';
                 document.getElementById('transpoResult').innerText = output;
             }
-        }
-
-        function runRail(encrypt) {
-            const text = document.getElementById('railInput').value.replace(/\s/g, '');
-            const rails = parseInt(document.getElementById('railCount').value);
-            if (!text || rails < 2) return;
-            let output = "";
-            
-            if(encrypt) {
-                output = railFence(text, rails);
-            } else {
-               let pattern = new Array(rails).fill(0), r=0, d=1;
-               for(let i=0;i<text.length;i++){ pattern[r]++; r+=d; if(r===0||r===rails-1)d*=-1; }
-               let fence=[], idx=0;
-               for(let k=0;k<rails;k++){ fence.push(text.substr(idx,pattern[k]).split('')); idx+=pattern[k]; }
-               r=0; d=1;
-               for(let i=0;i<text.length;i++){ output+=fence[r].shift(); r+=d; if(r===0||r===rails-1)d*=-1; }
-            }
-            document.getElementById('railResult').style.display = 'block';
-            document.getElementById('railResult').innerText = output;
         }
 
         function solveMod() {
