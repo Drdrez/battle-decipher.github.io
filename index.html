@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v9.2 (No Rail)</title>
+    <title>Battle Decipher v9.3 (Direct Shift)</title>
     <style>
         :root { 
             --bg: #0f172a; 
@@ -139,7 +139,7 @@
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v9.2</h1>
+    <h1>🔐 Battle Decipher v9.3</h1>
 
     <div class="tabs">
         <div class="tab dojo-tab" onclick="switchTab('dojo')">🥋 Training Dojo</div>
@@ -185,14 +185,15 @@
                         <input type="number" id="caesarShift" placeholder="Empty = Brute Force">
                     </div>
                     <div style="flex:1.5; font-size:0.85em; color:#aaa; padding-top:25px; line-height: 1.4;">
-                        <span style="color:var(--success)">DECRYPT:</span> Key present = Reverse Shift.<br>
-                        Key empty = List all shifts (+/-).
+                        <span style="color:var(--success)">DIRECT CONTROL:</span><br>
+                        Input <b>3</b> shifts Right.<br>
+                        Input <b>-3</b> shifts Left.
                     </div> 
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn-decrypt" onclick="solveCaesar(false)">🔓 DECRYPT</button>
-                    <button class="btn-encrypt" onclick="solveCaesar(true)">🔒 ENCRYPT</button>
+                    <button class="btn-decrypt" onclick="solveCaesar(false)">🔓 APPLY SHIFT</button>
+                    <button class="btn-encrypt" onclick="solveCaesar(true)">🔒 APPLY SHIFT</button>
                 </div>
                 <div id="caesarResult" class="result-box" style="display:none;"></div>
             </div>
@@ -377,29 +378,22 @@
             const shiftInput = document.getElementById('caesarShift').value;
             let output = "";
 
-            if (encrypt) {
-                // ENCRYPT always requires a shift. Default to 0 if empty.
-                const shift = shiftInput ? parseInt(shiftInput) : 0;
+            if (shiftInput !== "" && shiftInput !== null) {
+                // MANUAL MODE (Direct Shift)
+                // Both buttons do the same thing: Apply the shift exactly as written.
+                const shift = parseInt(shiftInput);
                 const result = caesarEngine(input.toUpperCase(), shift);
-                output = `<div class="result-row"><div class="lbl">ENCRYPTED:</div><div>${result}</div></div>`;
+                output = `<div class="result-row"><div class="lbl">RESULT:</div><div>${result}</div></div>`;
                 output += `<div class="note">Applied Shift: ${shift}</div>`;
             } else {
-                // DECRYPT MODE
-                if (shiftInput !== "" && shiftInput !== null) {
-                    // KEY PROVIDED: Specific Decrypt (Inverse Shift)
-                    const shift = parseInt(shiftInput);
-                    const result = caesarEngine(input.toUpperCase(), -shift);
-                    output = `<div class="result-row"><div class="lbl">DECRYPTED:</div><div>${result}</div></div>`;
-                    output += `<div class="note">Applied Inverse Shift: ${-shift} (User Input: ${shift})</div>`;
-                } else {
-                    // KEY EMPTY: Brute Force (Caesar)
-                    for (let s = 1; s < 26; s++) {
-                        // Listing equivalence: Shift +1 is the same as Shift -25
-                        const result = caesarEngine(input.toUpperCase(), -s);
-                        output += `<div class="result-row"><div class="lbl">-${s} / +${26-s}:</div><div>${result}</div></div>`;
-                    }
+                // EMPTY INPUT MODE (Brute Force)
+                // Only runs if input is empty. Default to listing all shifts.
+                for (let s = 1; s < 26; s++) {
+                    const result = caesarEngine(input.toUpperCase(), -s);
+                    output += `<div class="result-row"><div class="lbl">-${s} / +${26-s}:</div><div>${result}</div></div>`;
                 }
             }
+            
             document.getElementById('caesarResult').style.display = 'block';
             document.getElementById('caesarResult').innerHTML = output;
         }
