@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v9.3 (Direct Shift)</title>
+    <title>Battle Decipher v9.4 (Full Solutions)</title>
     <style>
         :root { 
             --bg: #0f172a; 
@@ -106,7 +106,7 @@
         .spoiler { filter: blur(5px); cursor: pointer; transition: 0.3s; background: #333; padding: 10px; border-radius: 4px; }
         .spoiler:hover, .spoiler.revealed { filter: blur(0); background: #000; }
 
-        /* RESULTS */
+        /* RESULTS & STEP-BY-STEP TABLES */
         .result-box { 
             margin-top: 20px; 
             padding: 15px; 
@@ -120,10 +120,17 @@
             display: flex;
             border-bottom: 1px solid #333;
             padding: 4px 0;
+            font-size: 1.1em;
         }
         .result-row:last-child { border: none; }
         .lbl { width: 120px; color: var(--success); font-weight: bold; flex-shrink: 0; }
         
+        .step-title { color: var(--purple); font-weight: bold; margin-top: 20px; border-bottom: 1px dashed #334155; padding-bottom: 5px; font-size: 0.9em; text-transform: uppercase; }
+        .step-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; background: #111827; }
+        .step-table th { background: #334155; color: var(--accent); padding: 8px; border: 1px solid #475569; }
+        .step-table td { padding: 8px; border: 1px solid #475569; text-align: center; color: #cbd5e1; }
+        .step-table td.math { font-family: monospace; text-align: left; line-height: 1.2; letter-spacing: 1px; }
+
         /* CHECKBOX ROW */
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer; background: #1e293b; padding: 5px 0; }
         .checkbox-row input { width: 20px; height: 20px; cursor: pointer; }
@@ -139,7 +146,7 @@
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v9.3</h1>
+    <h1>🔐 Battle Decipher v9.4</h1>
 
     <div class="tabs">
         <div class="tab dojo-tab" onclick="switchTab('dojo')">🥋 Training Dojo</div>
@@ -201,7 +208,7 @@
             <div id="xor" class="panel">
                 <h3>XOR / One-Time Pad</h3>
                 <textarea id="xorInput" rows="3" placeholder="Input text or hex..."></textarea>
-                <label class="checkbox-row"><input type="checkbox" id="isHex" checked onchange="togglePlaceholder()"> <span>Is input Hex?</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="isHex" checked onchange="togglePlaceholder()"> <span>Is input Hex? (Uncheck if input is plain text)</span></label>
                 <label>Key:</label><input type="text" id="xorKey" placeholder="Enter Key...">
                 <div class="btn-group">
                     <button class="btn-decrypt" onclick="solveXOR(false)">🔓 DECRYPT</button>
@@ -213,7 +220,7 @@
             <div id="transpo" class="panel">
                 <h3>Columnar Transposition</h3>
                 <textarea id="transpoInput" rows="3" placeholder="Enter text..."></textarea>
-                <label>Key:</label><input type="text" id="transpoKey" placeholder="e.g. 4 3 1 2">
+                <label>Key:</label><input type="text" id="transpoKey" placeholder="e.g. 4 3 1 2 or SECRET">
                 <div class="btn-group">
                     <button class="btn-decrypt" onclick="runTranspo(false)">🔓 DECRYPT</button>
                     <button class="btn-encrypt" onclick="runTranspo(true)">🔒 ENCRYPT</button>
@@ -379,15 +386,11 @@
             let output = "";
 
             if (shiftInput !== "" && shiftInput !== null) {
-                // MANUAL MODE (Direct Shift)
-                // Both buttons do the same thing: Apply the shift exactly as written.
                 const shift = parseInt(shiftInput);
                 const result = caesarEngine(input.toUpperCase(), shift);
                 output = `<div class="result-row"><div class="lbl">RESULT:</div><div>${result}</div></div>`;
                 output += `<div class="note">Applied Shift: ${shift}</div>`;
             } else {
-                // EMPTY INPUT MODE (Brute Force)
-                // Only runs if input is empty. Default to listing all shifts.
                 for (let s = 1; s < 26; s++) {
                     const result = caesarEngine(input.toUpperCase(), -s);
                     output += `<div class="result-row"><div class="lbl">-${s} / +${26-s}:</div><div>${result}</div></div>`;
@@ -417,8 +420,42 @@
                 resultBytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ') : 
                 String.fromCharCode(...resultBytes);
 
+            // Generate Step-by-Step Visualization
+            let stepHtml = `<div class="step-title">Step-by-Step Binary XOR Breakdown</div>`;
+            stepHtml += `<div style="overflow-x:auto;"><table class="step-table">`;
+            stepHtml += `<tr><th>Input</th><th>Key</th><th>Binary Calculation</th><th>Result (Hex)</th><th>Result (Char)</th></tr>`;
+
+            for (let i = 0; i < inputBytes.length; i++) {
+                let inB = inputBytes[i];
+                let kB = key.charCodeAt(i % key.length);
+                let resB = resultBytes[i];
+
+                let inBin = inB.toString(2).padStart(8, '0');
+                let kBin = kB.toString(2).padStart(8, '0');
+                let resBin = resB.toString(2).padStart(8, '0');
+                
+                let inHex = inB.toString(16).padStart(2,'0').toUpperCase();
+                let kHex = kB.toString(16).padStart(2,'0').toUpperCase();
+                let resHex = resB.toString(16).padStart(2,'0').toUpperCase();
+                
+                let inChar = isHex && !encrypt ? inHex : String.fromCharCode(inB).replace(/[\x00-\x1F\x7F-\x9F]/g, '.');
+                let kChar = String.fromCharCode(kB).replace(/[\x00-\x1F\x7F-\x9F]/g, '.');
+                let resChar = String.fromCharCode(resB).replace(/[\x00-\x1F\x7F-\x9F]/g, '.');
+
+                stepHtml += `<tr>
+                    <td>${inChar}<br><span class="note">(0x${inHex})</span></td>
+                    <td>${kChar}<br><span class="note">(0x${kHex})</span></td>
+                    <td class="math">&nbsp;&nbsp;${inBin}<br>⊕ ${kBin}<br>&nbsp;&nbsp;--------<br>&nbsp;&nbsp;${resBin}</td>
+                    <td><b>0x${resHex}</b></td>
+                    <td><b>${resChar}</b></td>
+                </tr>`;
+            }
+            stepHtml += `</table></div>`;
+
+            let finalOutput = `<div class="result-row"><div class="lbl">${encrypt ? 'ENCRYPTED' : 'DECRYPTED'}:</div><div style="word-break: break-all;">${output}</div></div>` + stepHtml;
+
             document.getElementById('xorResult').style.display = 'block';
-            document.getElementById('xorResult').innerText = output;
+            document.getElementById('xorResult').innerHTML = finalOutput;
         }
 
         function runTranspo(encrypt) {
@@ -437,13 +474,34 @@
                 keyOrder = keyIndices.map(k => k.index);
             }
 
+            const keyLen = keyOrder.length;
+            const rows = Math.ceil(text.length / keyLen);
+            const fullCols = text.length % keyLen;
+
+            let stepHtml = `<div class="step-title">Step-by-Step Columnar Breakdown</div>`;
+
             if(encrypt) {
+                let padded = text.padEnd(rows * keyLen, 'X');
+                let grid = [];
+                for(let r=0; r<rows; r++) grid.push(padded.substr(r*keyLen, keyLen));
+                
+                stepHtml += `<div class="note" style="margin-bottom:10px;"><b>1. Setup Grid:</b> Text is padded with 'X' to complete the rectangle (${padded.length} chars total).</div>`;
+                stepHtml += `<div style="overflow-x:auto;"><table class="step-table"><tr>`;
+                for(let i=0; i<keyLen; i++) {
+                    let readNum = keyOrder.indexOf(i) + 1; // Determines reading order
+                    stepHtml += `<th>Col ${i}<br><span style="color:var(--danger);font-size:0.8em;">(Read #${readNum})</span></th>`;
+                }
+                stepHtml += `</tr>`;
+                for(let r=0; r<rows; r++) {
+                    stepHtml += `<tr>` + grid[r].split('').map(c => `<td>${c}</td>`).join('') + `</tr>`;
+                }
+                stepHtml += `</table></div>`;
+                stepHtml += `<div class="note" style="margin-top:10px;"><b>2. Extraction:</b> Read down the columns in the order noted in red above.</div>`;
+
+                let finalOutput = `<div class="result-row"><div class="lbl">ENCRYPTED:</div><div style="word-break: break-all;">${columnarEngine(text, keyOrder)}</div></div>` + stepHtml;
                 document.getElementById('transpoResult').style.display = 'block';
-                document.getElementById('transpoResult').innerText = columnarEngine(text, keyOrder);
+                document.getElementById('transpoResult').innerHTML = finalOutput;
             } else {
-                const keyLen = keyOrder.length;
-                const rows = Math.ceil(text.length / keyLen);
-                const fullCols = text.length % keyLen;
                 let grid = new Array(keyLen).fill("");
                 let currentIndex = 0;
                 for (let i = 0; i < keyLen; i++) {
@@ -453,14 +511,35 @@
                     grid[targetColIndex] = text.substr(currentIndex, colLength);
                     currentIndex += colLength;
                 }
+
+                stepHtml += `<div class="note" style="margin-bottom:10px;"><b>1. Column Analysis:</b> Text length is ${text.length}. Dividing into ${keyLen} columns. Long columns get ${rows} rows, short columns get ${rows-1} rows.</div>`;
+                stepHtml += `<div style="overflow-x:auto;"><table class="step-table"><tr>`;
+                for(let i=0; i<keyLen; i++) {
+                    let fillNum = keyOrder.indexOf(i) + 1;
+                    stepHtml += `<th>Col ${i}<br><span style="color:var(--success);font-size:0.8em;">(Filled #${fillNum})</span></th>`;
+                }
+                stepHtml += `</tr>`;
+                for(let r=0; r<rows; r++) {
+                    stepHtml += `<tr>`;
+                    for(let c=0; c<keyLen; c++) {
+                        let char = (grid[c] && grid[c].length > r) ? grid[c][r] : "<span style='color:#333'>-</span>";
+                        stepHtml += `<td>${char}</td>`;
+                    }
+                    stepHtml += `</tr>`;
+                }
+                stepHtml += `</table></div>`;
+                stepHtml += `<div class="note" style="margin-top:10px;"><b>2. Extraction:</b> Read across the rows left-to-right to reconstruct the message.</div>`;
+
                 let output = "";
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < keyLen; c++) {
                         if (grid[c] && grid[c].length > r) output += grid[c][r];
                     }
                 }
+                
+                let finalOutput = `<div class="result-row"><div class="lbl">DECRYPTED:</div><div style="word-break: break-all;">${output}</div></div>` + stepHtml;
                 document.getElementById('transpoResult').style.display = 'block';
-                document.getElementById('transpoResult').innerText = output;
+                document.getElementById('transpoResult').innerHTML = finalOutput;
             }
         }
 
