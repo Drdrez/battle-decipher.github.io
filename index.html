@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Decipher v9.4 (Full Solutions)</title>
+    <title>Battle Decipher v9.5 (XOR Output Fix)</title>
     <style>
         :root { 
             --bg: #0f172a; 
@@ -119,11 +119,11 @@
         .result-row {
             display: flex;
             border-bottom: 1px solid #333;
-            padding: 4px 0;
+            padding: 8px 0;
             font-size: 1.1em;
         }
         .result-row:last-child { border: none; }
-        .lbl { width: 120px; color: var(--success); font-weight: bold; flex-shrink: 0; }
+        .lbl { width: 130px; color: var(--success); font-weight: bold; flex-shrink: 0; }
         
         .step-title { color: var(--purple); font-weight: bold; margin-top: 20px; border-bottom: 1px dashed #334155; padding-bottom: 5px; font-size: 0.9em; text-transform: uppercase; }
         .step-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; background: #111827; }
@@ -146,7 +146,7 @@
 </head>
 <body>
 
-    <h1>🔐 Battle Decipher v9.4</h1>
+    <h1>🔐 Battle Decipher v9.5</h1>
 
     <div class="tabs">
         <div class="tab dojo-tab" onclick="switchTab('dojo')">🥋 Training Dojo</div>
@@ -405,7 +405,7 @@
             let input = document.getElementById('xorInput').value.trim();
             const key = document.getElementById('xorKey').value;
             const isHex = document.getElementById('isHex').checked;
-            if (!key) return;
+            if (!key || !input) return;
 
             let inputBytes = [];
             if (isHex && !encrypt) {
@@ -416,9 +416,12 @@
             }
 
             let resultBytes = inputBytes.map((b, i) => b ^ key.charCodeAt(i % key.length));
-            let output = encrypt ? 
-                resultBytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ') : 
-                String.fromCharCode(...resultBytes);
+
+            // ALWAYS create Hex output and Safe Text output
+            let outHex = resultBytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+            let outTextRaw = String.fromCharCode(...resultBytes);
+            // Replace non-printable ASCII characters (0-31, 127-159) with ''
+            let outTextSafe = outTextRaw.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
 
             // Generate Step-by-Step Visualization
             let stepHtml = `<div class="step-title">Step-by-Step Binary XOR Breakdown</div>`;
@@ -438,9 +441,9 @@
                 let kHex = kB.toString(16).padStart(2,'0').toUpperCase();
                 let resHex = resB.toString(16).padStart(2,'0').toUpperCase();
                 
-                let inChar = isHex && !encrypt ? inHex : String.fromCharCode(inB).replace(/[\x00-\x1F\x7F-\x9F]/g, '.');
-                let kChar = String.fromCharCode(kB).replace(/[\x00-\x1F\x7F-\x9F]/g, '.');
-                let resChar = String.fromCharCode(resB).replace(/[\x00-\x1F\x7F-\x9F]/g, '.');
+                let inChar = isHex && !encrypt ? inHex : String.fromCharCode(inB).replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+                let kChar = String.fromCharCode(kB).replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+                let resChar = String.fromCharCode(resB).replace(/[\x00-\x1F\x7F-\x9F]/g, '');
 
                 stepHtml += `<tr>
                     <td>${inChar}<br><span class="note">(0x${inHex})</span></td>
@@ -452,7 +455,10 @@
             }
             stepHtml += `</table></div>`;
 
-            let finalOutput = `<div class="result-row"><div class="lbl">${encrypt ? 'ENCRYPTED' : 'DECRYPTED'}:</div><div style="word-break: break-all;">${output}</div></div>` + stepHtml;
+            // Display BOTH Text and Hex so nothing is ever "empty"
+            let finalOutput = `<div class="result-row"><div class="lbl">TEXT RESULT:</div><div style="word-break: break-all;">${outTextSafe}</div></div>`;
+            finalOutput += `<div class="result-row"><div class="lbl">HEX RESULT:</div><div style="word-break: break-all; font-family: monospace; color: var(--purple);">${outHex}</div></div>`;
+            finalOutput += stepHtml;
 
             document.getElementById('xorResult').style.display = 'block';
             document.getElementById('xorResult').innerHTML = finalOutput;
